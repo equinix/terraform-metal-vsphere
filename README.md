@@ -1,2 +1,1 @@
-# vmware-on-packet
-Deploy VMware on Packet
+VMware on Packet
