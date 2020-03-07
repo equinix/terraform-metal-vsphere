@@ -30,7 +30,7 @@ resource "null_resource" "install_vpn_server" {
     connection {
         type = "ssh"
         user = "root"
-        private_key = file("~/.ssh/id_rsa")
+        private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
         host = packet_device.router.access_public_ipv4
     }
 

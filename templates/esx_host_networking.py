@@ -38,6 +38,17 @@ for i in range(len(public_vlans)):
     subnets.append(public_subnets[i])
 
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 def create_vswitch(host_network_system, vss_name, num_ports, nic_name, mtu):
     vss_spec = vim.host.VirtualSwitch.Specification()
     vss_spec.numPorts = num_ports
@@ -139,15 +150,16 @@ def connect_to_host(esx_host, esx_user, esx_pass):
 
 def main():
     parser = optparse.OptionParser(usage="%prog --host <host_ip> --user <username> --pass <password> "
-                                   "--vswitch <vswitch_name> --uplinks <comma_list_uplink_names>")
+                                   "--id <device_id> --index <terraform_index> --ipRes <ip_reservation>")
     parser.add_option('--host', dest="host", action="store", help="IP or FQDN of the ESXi host")
     parser.add_option('--user', dest="user", action="store", help="Username to authenticate to ESXi host")
     parser.add_option('--pass', dest="pw", action="store", help="Password to authenticarte to ESXi host")
     parser.add_option('--id', dest="id", action="store", help="Packet Device ID for Server")
     parser.add_option('--index', dest="index", action="store", help="Terraform index count, used for IPing")
+    parser.add_option('--ipRes', dest="ipRes", action="store", help="IP reservation for /29 ip block")
 
     options, _ = parser.parse_args()
-    if not (options.host and options.user and options.pw and options.id and options.index):
+    if not (options.host and options.user and options.pw and options.id and options.index and options.ipRes):
         print("ERROR: Missing arguments")
         parser.print_usage()
         sys.exit(1)
@@ -162,9 +174,19 @@ def main():
     host_network_system = host.configManager.networkSystem
     online_pnics = []
 
-    for pnic in host.config.network.pnic:
-        if pnic.linkSpeed:
-            online_pnics.append(pnic)
+    for i in range(1, 6):
+        for pnic in host.config.network.pnic:
+            if pnic.linkSpeed:
+                online_pnics.append(pnic)
+        if len(online_pnics) >= 1:
+            break
+        else:
+            print("Couldn't find a physical nic with a link speed. Sleeping 10 seconds and checking again.")
+            sleep(10)
+
+    if len(online_pnics) <= 0:
+        print(f"{bcolors.FAIL}ERROR: Couldn't find a physical nic with a link speed for over 1 minute. Exiting!!!{bcolors.ENDC}")
+        sys.exit(1)
 
     for vswitch in host_network_system.networkInfo.vswitch:
         for pnic in vswitch.pnic:
@@ -172,6 +194,10 @@ def main():
                 if pnic == online_pnics[n].key:
                     del online_pnics[n]
                     break
+    
+    if len(online_pnics) <= 0:
+        print("No additional uplink is active! Please email support@packet.com and tell them you think this server has a bad NIC!")
+        sys.exit(1)
 
     uplink = online_pnics[0].device
     create_vswitch(host_network_system, vswitch_name, 1024, uplink, 9000)
@@ -183,7 +209,7 @@ def main():
             default_gateway = None
             mtu = 9000
             if subnet['vsphere_service_type'] == 'management':
-                create_port_group(host_network_system, "{} Net".format(subnet['name']), vswitch_name, subnet['vlan'])
+                create_port_group(host_network_system, "Management", vswitch_name, subnet['vlan'])
                 default_gateway = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
                 dns_servers = []
                 dns_servers.append(default_gateway)
@@ -204,8 +230,11 @@ def main():
                 etc_hosts.close()
                 # Restart dnsmasq service
                 Popen(["systemctl restart dnsmasq"], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
-            virtual_nic = add_virtual_nic(host, host_network_system, subnet['name'], 'static', ip_address,
+                virtual_nic = add_virtual_nic(host, host_network_system, "Management", 'static', ip_address,
                                           subnet_mask, default_gateway, dns_servers, domain_name, mtu)
+            else:
+                virtual_nic = add_virtual_nic(host, host_network_system, subnet['name'], 'static', ip_address,
+                                              subnet_mask, "", "", "", mtu)
             enable_service_on_virtual_nic(host, virtual_nic, subnet['vsphere_service_type'])
     connect.Disconnect(si)
 
@@ -237,8 +266,6 @@ def main():
 
     print("Removing vSwitch: {}".format(del_vswitch_name))
     host_network_system.RemoveVirtualSwitch(del_vswitch_name)
-    #vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=new_uplinks)
-    #vss_spec.policy.nicTeaming.nicOrder.activeNic = new_uplinks
 
     print("Updating vSwitch Uplinks...")
     str_active_uplinks = ",".join(map(str, active_uplinks))
@@ -313,7 +340,8 @@ def main():
                         sys.exit(1)
                     print("Failed to add vLan to bond, trying again...")
                     sleep(5)
-
+    # Clean up IP Reservations
+    manager.delete_ip(options.ipRes)
 
 # Start program
 if __name__ == "__main__":
