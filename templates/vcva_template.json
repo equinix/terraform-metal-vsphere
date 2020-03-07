@@ -5,7 +5,7 @@
       "hostname": "__ESXI_IP__",
       "username": "root",
       "password": "${first_esx_pass}",
-      "deployment_network": "${vcenter_network} Net",
+      "deployment_network": "${vcenter_network}",
       "datastore": "datastore1"
     },
     "appliance": {
@@ -18,10 +18,10 @@
       "mode": "static",
       "ip": "__VCENTER_IP__",
       "dns_servers": [
-        "__MGMT_GATEWAY__"
+        "__VCENTER_GATEWAY__"
       ],
-      "prefix": "__MGMT_PREFIX_LENGTH__",
-      "gateway": "__MGMT_GATEWAY__",
+      "prefix": "__VCENTER_PREFIX_LENGTH__",
+      "gateway": "__VCENTER_GATEWAY__",
       "system_name": "vcva.${domain_name}"
     },
     "os": {
@@ -31,7 +31,7 @@
     },
     "sso": {
       "password": "${sso_password}",
-      "domain_name": "vsphere.local"
+      "domain_name": "${vcenter_domain}"
     }
   },
   "ceip": {

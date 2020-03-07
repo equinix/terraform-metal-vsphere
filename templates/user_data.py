@@ -32,23 +32,14 @@ words = words_list()
 # Allow
 os.system("echo 'iptables-persistent iptables-persistent/autosave_v4 boolean true' | sudo debconf-set-selections")
 os.system("echo 'iptables-persistent iptables-persistent/autosave_v6 boolean true' | sudo debconf-set-selections")
-# Install Apt Packages
-apt_packages = ['dnsmasq', 'vlan', 'iptables-persistent', 'conntrack', 'python3-pip']
 
-cache = apt.cache.Cache()
-cache.update()
-cache.open()
-for pkg_name in apt_packages:
-    pkg = cache[pkg_name]
-    if pkg.is_installed:
-        print("{pkg_name} already installed".format(pkg_name=pkg_name))
-    else:
-        pkg.mark_install()
-        try:
-            cache.commit()
-        except Exception as arg:
-            print("Sorry, package installation failed [{err}]".format(err=str(arg)))
-cache.close()
+# Disable systemd-resolved
+os.system("systemctl stop systemd-resolved")
+os.system("systemctl disable systemd-resolved")
+
+# Install Apt Packages
+os.system('DEBIAN_FRONTEND=noninteractive apt-get update -y')
+os.system('DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip')
 
 # Build single subnet map with all vlans, cidrs, etc...
 subnets = json.loads(private_subnets)

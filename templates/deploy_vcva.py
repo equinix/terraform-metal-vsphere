@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 import socket
+from time import sleep
 from pyVmomi import vim, vmodl
 from pyVim import connect
 
@@ -21,7 +22,10 @@ def get_ssl_thumbprint(host_ip):
 
 # Vars from Terraform
 private_subnets = '${private_subnets}'
+public_subnets = '${public_subnets}'
+public_cidrs = '${public_cidrs}'
 esx_passwords = '${esx_passwords}'
+vcenter_username ='${vcenter_user}@${vcenter_domain}'
 sso_password = '${sso_password}'
 dc_name = '${dc_name}'
 cluster_name = '${cluster_name}'
@@ -29,35 +33,38 @@ vcenter_network = '${vcenter_network}'
 
 # Parse TF Vars
 subnets = json.loads(private_subnets)
+public_subnets = json.loads(public_subnets)
+public_cidrs = json.loads(public_cidrs)
+for i in range(len(public_cidrs)):
+    public_subnets[i]['cidr'] = public_cidrs[i]
+    subnets.append(public_subnets[i])
 esx_passes = json.loads(esx_passwords)
 esx = []
 for pw in esx_passes:
     esx.append({"password": pw})
 
 for subnet in subnets:
-    if subnet['name'] == vcenter_network:
-        vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
+    if subnet['vsphere_service_type'] == 'management':
         esx_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[3].compressed
-        gateway_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
-        prefix_length = int(subnet['cidr'].split('/')[1])
         for i in range(len(esx)):
             esx[i]['private_ip'] = list(ipaddress.ip_network(subnet['cidr']).hosts())[i + 3].compressed
-        break
+    if subnet['name'] == vcenter_network:
+        vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
+        gateway_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
+        prefix_length = int(subnet['cidr'].split('/')[1])
 
 os.system("sed -i 's/__ESXI_IP__/{}/g' /root/vcva_template.json".format(esx_ip))
 os.system("sed -i 's/__VCENTER_IP__/{}/g' /root/vcva_template.json".format(vcenter_ip))
-os.system("sed -i 's/__MGMT_GATEWAY__/{}/g' /root/vcva_template.json".format(gateway_ip))
-os.system("sed -i 's/__MGMT_PREFIX_LENGTH__/{}/g' /root/vcva_template.json".format(prefix_length))
+os.system("sed -i 's/__VCENTER_GATEWAY__/{}/g' /root/vcva_template.json".format(gateway_ip))
+os.system("sed -i 's/__VCENTER_PREFIX_LENGTH__/{}/g' /root/vcva_template.json".format(prefix_length))
 os.system("/mnt/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula --acknowledge-ceip "
           "--no-esx-ssl-verify /root/vcva_template.json")
-
-
 
 # Connect to vCenter
 for i in range(1, 30):
     si = None
     try:
-        si = connect.SmartConnectNoSSL(host=vcenter_ip, user="Administrator@vsphere.local", pwd=sso_password, port=443)
+        si = connect.SmartConnectNoSSL(host=vcenter_ip, user=vcenter_username, pwd=sso_password, port=443)
         break
     except Exception:
         sleep(10)

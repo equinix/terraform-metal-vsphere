@@ -5,26 +5,29 @@ variable "organization_id" {
 }
 
 variable "project_name" {
-  default = "anthos-on-packet-1"
+    default = "vmware-on-packet-1"
 }
 
 /*
 Valid vsphere_service_types are:
-  faultToleranceLogging
-  vmotion
-  vSphereReplication
-  vSphereReplicationNFC
-  vSphereProvisioning
-  vsan
-  management
+    faultToleranceLogging
+    vmotion
+    vSphereReplication
+    vSphereReplicationNFC
+    vSphereProvisioning
+    vsan
+    management
+
+The subnet name "Management" is reserved for ESXi hosts.
+Whichever subnet is labeled with vsphere_service_type: management will share a vLan with ESXi hosts.
 */
 
 variable "private_subnets" {
     default = [
         {
-            "name": "Management",
+            "name": "VM Private Net 1",
             "nat": true,
-            "vsphere_service_type": "management",
+            "vsphere_service_type": null,
             "routable": true,
             "cidr": "172.16.0.0/24"
         },
@@ -41,13 +44,6 @@ variable "private_subnets" {
             "vsphere_service_type": "vsan",
             "routable": false,
             "cidr": "172.16.2.0/24"
-        },
-        {
-            "name": "VM Private Net",
-            "nat": true,
-            "vsphere_service_type": null,
-            "routable": true,
-            "cidr": "172.16.3.0/24"
         }
     ]
 }
@@ -55,91 +51,90 @@ variable "private_subnets" {
 variable "public_subnets" {
     default = [
         {
-            "name": "VM Public Net",
+            "name": "VM Public Net 1",
             "nat": false,
-            "vsphere_service_type": null,
+            "vsphere_service_type": "management",
             "routable": true,
-            "ip_count": 4
+            "ip_count": 16
         }
     ]
 }
 
 variable "router_hostname" {
-  default = "edge-gateway01"
+    default = "edge-gateway01"
 }
 
 variable "esxi_hostname" {
-  default = "esx"
+    default = "esx"
 }
 
 variable "router_size" {
-  default = "c2.medium.x86"
+    default = "c3.small.x86"
 }
 
 variable "esxi_size" {
-  default = "c2.medium.x86"
+    default = "s1.large.x86"
 }
 
 variable "facility" {
-  default = "dfw2"
+    default = "sjc1"
 }
 
 variable "router_os" {
-  default = "ubuntu_16_04"
+    default = "ubuntu_18_04"
 }
 
 variable "vmware_os" {
-  default = "vmware_esxi_6_5"
+    default = "vmware_esxi_6_5"
 }
 
 variable "billing_cycle" {
-  default = "hourly"
+    default = "hourly"
 }
 
 variable "esxi_host_count" {
-  default = 3
+    default = 3
 }
 
 variable "vcenter_portgroup_name" {
-  default = "Management"
+    default = "VM Public Net 1"
 }
 
 variable "domain_name" {
-  default = "packet.local"
+    default = "packet.local"
 }
 
 variable "vpn_user" {
-  default = "vm_admin"
+    default = "vm_admin"
 }
 
 variable "vcenter_datacenter_name" {
-  default = "Packet"
+    default = "Packet"
 }
 
 variable "vcenter_cluster_name" {
-  default = "Packet-1"
+    default = "Packet-1"
+}
+
+variable "vcenter_domain" {
+    default = "vsphere.local"
+}
+
+variable "vcenter_user_name" {
+    default = "Administrator"
 }
 
 variable "s3_url" {
-  default = "https://s3.example.com"
 }
 
 variable "s3_bucket_name" {
-  default = "vmware"
 }
 
 variable "s3_access_key" {
-  default = "S3_ACCESS_KEY"
 }
 
 variable "s3_secret_key" {
-  default = "S3_SECRET_KEY"
-}
-
-variable "s3_boolean" {
-  default = "false"
 }
 
 variable "vcenter_iso_name" {
 }
-

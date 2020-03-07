@@ -65,9 +65,13 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
 
 # Terraform Vars
 vcenter_fqdn = '${vcenter_fqdn}'
-vcenter_user = '${vcenter_user}'
+vcenter_user = '${vcenter_user}@${vcenter_domain}'
 vcenter_pass = '${vcenter_pass}'
-
+packet_server_plan = '${plan_type}'
+if packet_server_plan[0].lower() == 's':
+    deploy_type = 'hybrid'
+else:
+    deploy_type = 'allFlash'
 
 # Workaround for SSL verification for vSan API
 requests.packages.urllib3.disable_warnings()
@@ -106,14 +110,17 @@ tasks = []
 for host,disks in diskmap.items():
     if len(disks['cache']) > len(disks['capacity']):
         disks['cache'] = disks['cache'][:len(disks['capacity'])]
+    try:
+        dm = vim.VimVsanHostDiskMappingCreationSpec(
+            cacheDisks=disks['cache'],
+            capacityDisks=disks['capacity'],
+            creationType=deploy_type,
+            host=host
+        )
+        task = vsanVcDiskManagementSystem.InitializeDiskMappings(dm)
+        tasks.append(task)
+    except expression as identifier:
+        print("Some vSan Claim error... Check vSan...")
+    
 
-    dm = vim.VimVsanHostDiskMappingCreationSpec(
-             cacheDisks=disks['cache'],
-             capacityDisks=disks['capacity'],
-             creationType='allFlash',
-             host=host
-         )
-
-    task = vsanVcDiskManagementSystem.InitializeDiskMappings(dm)
-    tasks.append(task)
-
+    
