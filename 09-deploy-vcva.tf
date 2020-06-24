@@ -48,8 +48,7 @@ resource "null_resource" "deploy_vcva" {
         inline = [
             "python3 /root/deploy_vcva.py", 
             "sleep 60",
-            "python3 /root/vsan_claim.py",
-            "sleep 90"
+            "python3 /root/vsan_claim.py"
         ]
     }
 }
