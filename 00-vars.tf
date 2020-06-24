@@ -27,7 +27,7 @@ variable "private_subnets" {
         {
             "name": "VM Private Net 1",
             "nat": true,
-            "vsphere_service_type": null,
+            "vsphere_service_type": "management",
             "routable": true,
             "cidr": "172.16.0.0/24"
         },
@@ -53,9 +53,9 @@ variable "public_subnets" {
         {
             "name": "VM Public Net 1",
             "nat": false,
-            "vsphere_service_type": "management",
+            "vsphere_service_type": null,
             "routable": true,
-            "ip_count": 16
+            "ip_count": 4
         }
     ]
 }
@@ -73,11 +73,11 @@ variable "router_size" {
 }
 
 variable "esxi_size" {
-    default = "s1.large.x86"
+    default = "c3.medium.x86"
 }
 
 variable "facility" {
-    default = "sjc1"
+    default = "dfw2"
 }
 
 variable "router_os" {
@@ -85,7 +85,7 @@ variable "router_os" {
 }
 
 variable "vmware_os" {
-    default = "vmware_esxi_6_5"
+    default = "vmware_esxi_7_0"
 }
 
 variable "billing_cycle" {
@@ -97,7 +97,7 @@ variable "esxi_host_count" {
 }
 
 variable "vcenter_portgroup_name" {
-    default = "VM Public Net 1"
+    default = "VM Private Net 1"
 }
 
 variable "domain_name" {
