@@ -12,14 +12,14 @@ data "template_file" "user_data" {
 
 resource "packet_device" "router" {
     depends_on = [
-        packet_ssh_key.ssh_pub_key
+        packet_project_ssh_key.ssh_pub_key
     ]
     hostname         = var.router_hostname
     plan             = var.router_size
     facilities       = [var.facility]
     operating_system = var.router_os
     billing_cycle    = var.billing_cycle
-    project_id       = packet_project.new_project.id
+    project_id       = local.project_id
     user_data        = data.template_file.user_data.rendered
     network_type     = "hybrid"
 }

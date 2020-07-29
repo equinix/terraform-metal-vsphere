@@ -5,7 +5,7 @@ resource "packet_device" "esxi_hosts" {
   facilities       = [var.facility]
   operating_system = var.vmware_os
   billing_cycle    = var.billing_cycle
-  project_id       = packet_project.new_project.id
+  project_id       = local.project_id
   network_type     = "hybrid"
   ip_address {
     type            = "public_ipv4"

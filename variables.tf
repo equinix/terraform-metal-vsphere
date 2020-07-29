@@ -8,6 +8,14 @@ variable "project_name" {
     default = "vmware-on-packet-1"
 }
 
+variable "project_id" {
+    default = ""
+}
+
+variable "create_project" {
+    description = "should terraform create the project? when false the project name must already exist"
+    default = false
+}
 /*
 Valid vsphere_service_types are:
     faultToleranceLogging
