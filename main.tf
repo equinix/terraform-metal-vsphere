@@ -45,7 +45,7 @@ resource "packet_vlan" "public_vlans" {
   description = jsonencode(element(var.public_subnets.*.name, count.index))
 }
 data "template_file" "user_data" {
-  template = file("templates/user_data.py")
+  template = file("${path.module}/templates/user_data.py")
   vars = {
     private_subnets = jsonencode(var.private_subnets)
     private_vlans   = jsonencode(packet_vlan.private_vlans.*.vxlan)
@@ -127,7 +127,7 @@ resource "packet_port_vlan_attachment" "esxi_pub_vlan_attach" {
   vlan_vnid = element(packet_vlan.public_vlans.*.vxlan, count.index)
 }
 data "template_file" "download_vcenter" {
-  template = file("templates/download_vcenter.sh")
+  template = file("${path.module}/templates/download_vcenter.sh")
   vars = {
     s3_url           = var.s3_url
     s3_access_key    = var.s3_access_key
@@ -177,7 +177,7 @@ resource "random_string" "vpn_pass" {
 }
 
 data "template_file" "vpn_installer" {
-  template = file("templates/l2tp_vpn.sh")
+  template = file("${path.module}/templates/l2tp_vpn.sh")
   vars = {
     ipsec_psk = random_string.ipsec_psk.result
     vpn_user  = var.vpn_user
@@ -227,7 +227,7 @@ resource "random_string" "sso_password" {
 }
 
 data "template_file" "vcva_template" {
-  template = file("templates/vcva_template.json")
+  template = file("${path.module}/templates/vcva_template.json")
   vars = {
     vcenter_password = random_string.vcenter_password.result
     sso_password     = random_string.sso_password.result
@@ -259,13 +259,13 @@ resource "null_resource" "copy_update_uplinks" {
   }
 
   provisioner "file" {
-    content     = file("templates/update_uplinks.py")
+    content     = file("${path.module}/templates/update_uplinks.py")
     destination = "/root/update_uplinks.py"
   }
 }
 
 data "template_file" "esx_host_networking" {
-  template = file("templates/esx_host_networking.py")
+  template = file("${path.module}/templates/esx_host_networking.py")
   vars = {
     private_subnets = jsonencode(var.private_subnets)
     private_vlans   = jsonencode(packet_vlan.private_vlans.*.vxlan)
@@ -312,7 +312,7 @@ resource "null_resource" "apply_esx_network_config" {
   }
 }
 data "template_file" "deploy_vcva_script" {
-  template = file("templates/deploy_vcva.py")
+  template = file("${path.module}/templates/deploy_vcva.py")
   vars = {
     private_subnets = jsonencode(var.private_subnets)
     public_subnets  = jsonencode(var.public_subnets)
@@ -328,7 +328,7 @@ data "template_file" "deploy_vcva_script" {
 }
 
 data "template_file" "claim_vsan_disks" {
-  template = file("templates/vsan_claim.py")
+  template = file("${path.module}/templates/vsan_claim.py")
   vars = {
     vcenter_fqdn   = format("vcva.%s", var.domain_name)
     vcenter_user   = var.vcenter_user_name
