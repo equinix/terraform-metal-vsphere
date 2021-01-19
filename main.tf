@@ -67,10 +67,16 @@ resource "metal_device" "router" {
   billing_cycle    = var.billing_cycle
   project_id       = metal_project.new_project.id
   user_data        = data.template_file.user_data.rendered
-  network_type     = "hybrid"
+}
+
+resource "metal_device_network_type" "router" {
+  device_id = metal_device.router.id
+  type      = "hybrid"
 }
 
 resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
+  depends_on = [metal_device_network_type.router]
+
   count     = length(metal_vlan.private_vlans)
   device_id = metal_device.router.id
   port_name = "eth1"
@@ -78,6 +84,8 @@ resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
 }
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
+  depends_on = [metal_device_network_type.router]
+  
   count     = length(metal_vlan.public_vlans)
   device_id = metal_device.router.id
   port_name = "eth1"
@@ -85,6 +93,8 @@ resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
 }
 
 resource "metal_ip_attachment" "block_assignment" {
+  depends_on = [metal_device_network_type.router]
+
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
@@ -97,7 +107,6 @@ resource "metal_device" "esxi_hosts" {
   operating_system = var.vmware_os
   billing_cycle    = var.billing_cycle
   project_id       = metal_project.new_project.id
-  network_type     = "hybrid"
   ip_address {
     type            = "public_ipv4"
     cidr            = 29
@@ -111,8 +120,15 @@ resource "metal_device" "esxi_hosts" {
   }
 }
 
+resource "metal_device_network_type" "esxi_hosts" {
+  count = var.esxi_host_count
+  device_id = metal_device.esxi_hosts[count.index].id
+  type      = "hybrid"
+}
 
 resource "metal_port_vlan_attachment" "esxi_priv_vlan_attach" {
+  depends_on = [metal_device_network_type.esxi_hosts]
+
   count     = length(metal_device.esxi_hosts) * length(metal_vlan.private_vlans)
   device_id = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.private_vlans)))
   port_name = "eth1"
@@ -121,6 +137,8 @@ resource "metal_port_vlan_attachment" "esxi_priv_vlan_attach" {
 
 
 resource "metal_port_vlan_attachment" "esxi_pub_vlan_attach" {
+  depends_on = [metal_device_network_type.esxi_hosts]
+
   count     = length(metal_device.esxi_hosts) * length(metal_vlan.public_vlans)
   device_id = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.public_vlans)))
   port_name = "eth1"
