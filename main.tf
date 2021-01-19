@@ -85,7 +85,7 @@ resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
   depends_on = [metal_device_network_type.router]
-  
+
   count     = length(metal_vlan.public_vlans)
   device_id = metal_device.router.id
   port_name = "eth1"
@@ -121,7 +121,7 @@ resource "metal_device" "esxi_hosts" {
 }
 
 resource "metal_device_network_type" "esxi_hosts" {
-  count = var.esxi_host_count
+  count     = var.esxi_host_count
   device_id = metal_device.esxi_hosts[count.index].id
   type      = "hybrid"
 }
@@ -291,7 +291,7 @@ data "template_file" "esx_host_networking" {
     public_vlans    = jsonencode(metal_vlan.public_vlans.*.vxlan)
     public_cidrs    = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
     domain_name     = var.domain_name
-    metal_token    = var.auth_token
+    metal_token     = var.auth_token
   }
 }
 
