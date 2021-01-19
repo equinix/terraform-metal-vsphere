@@ -1,6 +1,6 @@
 import json
 import ipaddress
-import packet
+import packet as metal
 import optparse
 import sys
 from time import sleep
@@ -16,7 +16,7 @@ public_subnets = '${public_subnets}'
 public_vlans = '${public_vlans}'
 public_cidrs = '${public_cidrs}'
 domain_name = '${domain_name}'
-packet_token = '${packet_token}'
+metal_token = '${metal_token}'
 
 # Constants
 vswitch_name = 'vSwitch1'
@@ -154,7 +154,7 @@ def main():
     parser.add_option('--host', dest="host", action="store", help="IP or FQDN of the ESXi host")
     parser.add_option('--user', dest="user", action="store", help="Username to authenticate to ESXi host")
     parser.add_option('--pass', dest="pw", action="store", help="Password to authenticarte to ESXi host")
-    parser.add_option('--id', dest="id", action="store", help="Packet Device ID for Server")
+    parser.add_option('--id', dest="id", action="store", help="Equinix Metal Device ID for Server")
     parser.add_option('--index', dest="index", action="store", help="Terraform index count, used for IPing")
     parser.add_option('--ipRes', dest="ipRes", action="store", help="IP reservation for /29 ip block")
 
@@ -196,7 +196,7 @@ def main():
                     break
     
     if len(online_pnics) <= 0:
-        print("No additional uplink is active! Please email support@packet.com and tell them you think this server has a bad NIC!")
+        print("No additional uplink is active! Please email support@equinixmetal.com and tell them you think this server has a bad NIC!")
         sys.exit(1)
 
     uplink = online_pnics[0].device
@@ -274,8 +274,8 @@ def main():
                                             new_ip, options.user, options.pw, vswitch_name, str_active_uplinks, str_backup_uplinks)
     Popen([cmd_str], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
 
-    # Get Packet Deivce
-    manager = packet.Manager(auth_token=packet_token)
+    # Get Equinix Metal Deivce
+    manager = metal.Manager(auth_token=metal_token)
     device = manager.get_device(options.id)
     for port in device.network_ports:
         if port['type'] == 'NetworkBondPort':

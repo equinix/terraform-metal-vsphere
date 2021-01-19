@@ -1,5 +1,5 @@
-# VMware on Packet
-This repo has Terraform plans to deploy a multi-node vSphere cluster with vSan enabled on Packet. Follow this simple instructions below and you shold be able to go from zero to vSphere in 30 minutes.
+# VMware on Equinix Metal
+This repo has Terraform plans to deploy a multi-node vSphere cluster with vSan enabled on Equinix Metal. Follow this simple instructions below and you shold be able to go from zero to vSphere in 30 minutes.
 
 ## Install Terraform 
 Terraform is just a single binary.  Visit their [download page](https://www.terraform.io/downloads.html), choose your operating system, make the binary executable, and move it into your path. 
@@ -16,8 +16,8 @@ sudo mv terraform /usr/local/bin/
 To download this project and get in the directory, run the following commands:
 
 ```bash
-git clone https://github.com/c0dyhi11/vmware-on-packet.git
-cd vmware-on-packet
+git clone https://github.com/equinix/terraform-metal-vsphere.git
+cd terraform-metal-vsphere
 ```
 
 ## Initialize Terraform 
@@ -48,9 +48,9 @@ Once logged in to "My VMware" the download links are as follows:
 You will need to find the two individual Python files in the vSAN SDK zip file and place them in the S3 bucket as shown above.
  
 ## Modify your variables 
-There are many variables which can be set to customize your install within `00-vars.tf`. The default variables to bring up a 3 node vSphere cluster and linux router using Packet's [s1.large.x86](https://www.packet.com/cloud/servers/s1-large/). Change each default variable at your own risk. 
+There are many variables which can be set to customize your install within `vars.tf`. The default variables to bring up a 3 node vSphere cluster and linux router using Equinix Metal's [c3.medium.x86](https://metal.equinix.com/product/servers/). Change each default variable at your own risk. 
 
-There are some variables you must set with a terraform.tfvars files. You need to set `auth_token` & `organization_id` to connect to Packet and the `project_name` which will be created in Packet. We will need an S3 compatible object store to download "Closed Source" packages such as vCenter. You'll provide `s3_url`, `s3_bucket_name`, `s3_access_key`, `s3_secret_key` as well as the vCenter ISO file name as `vcenter_iso_name`. 
+There are some variables you must set with a terraform.tfvars files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will need an S3 compatible object store to download "Closed Source" packages such as vCenter. You'll provide `s3_url`, `s3_bucket_name`, `s3_access_key`, `s3_secret_key` as well as the vCenter ISO file name as `vcenter_iso_name`. 
 
  
 Here is a quick command plus sample values to start file for you (make sure you adjust the variables to match your environment, pay specail attention that the `vcenter_iso_name` matches whats in your bucket): 
@@ -58,7 +58,7 @@ Here is a quick command plus sample values to start file for you (make sure you 
 cat <<EOF >terraform.tfvars 
 auth_token = "cefa5c94-e8ee-4577-bff8-1d1edca93ed8" 
 organization_id = "42259e34-d300-48b3-b3e1-d5165cd14169" 
-project_name = "vmware-packet-project-1"
+project_name = "vmware-metal-project-1"
 s3_url = "https://s3.example.com" 
 s3_bucket_name = "vmware" 
 s3_access_key = "4fa85962-975f-4650-b603-17f1cb9dee10" 
@@ -68,7 +68,7 @@ EOF
 ``` 
 
  
-## Deploy the Packet vSphere cluster 
+## Deploy the Equinix Metal vSphere cluster 
  
 All there is left to do now is to deploy the cluster: 
 ```bash 
@@ -85,7 +85,7 @@ VPN_PSK = @U69neoBD2vlGdHbe@o1
 VPN_Pasword = 0!kfeooo?FaAvyZ2 
 VPN_User = vm_admin 
 vCenter_Appliance_Root_Password = n4$REf6p*oMo2eYr 
-vCenter_FQDN = vcva.packet.local 
+vCenter_FQDN = vcva.metal.local 
 vCenter_Password = bzN4UE7m3g$DOf@P 
 vCenter_Username = Administrator@vsphere.local 
 ``` 
@@ -105,4 +105,4 @@ Some corporate networks block outbound L2TP traffic. If you are experiening issu
 ## Cleaning the environement
 To clean up a created environment (or a failed one), run `terraform destroy --auto-approve`.
 
-If this does not work for some reason, you can manually delete each of the resources created in Packet (including the project) and then delete your terraform state file, `rm -f terraform.tfstate`.
+If this does not work for some reason, you can manually delete each of the resources created in Equinix Metal (including the project) and then delete your terraform state file, `rm -f terraform.tfstate`.

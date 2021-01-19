@@ -168,4 +168,4 @@ os.system("systemctl restart dnsmasq")
 os.system("iptables-save > /etc/iptables/rules.v4")
 
 # Install python modules
-os.system("pip3 install --upgrade pip pyvmomi packet-python")
+os.system("pip3 install --upgrade pip pyvmomi metal-python")

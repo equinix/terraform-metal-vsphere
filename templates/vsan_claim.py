@@ -67,8 +67,8 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
 vcenter_fqdn = '${vcenter_fqdn}'
 vcenter_user = '${vcenter_user}@${vcenter_domain}'
 vcenter_pass = '${vcenter_pass}'
-packet_server_plan = '${plan_type}'
-if packet_server_plan[0].lower() == 's':
+metal_server_plan = '${plan_type}'
+if metal_server_plan[0].lower() == 's':
     deploy_type = 'hybrid'
 else:
     deploy_type = 'allFlash'
@@ -82,7 +82,7 @@ context.verify_mode = ssl.CERT_NONE
 
 
 si = connect.SmartConnectNoSSL(host=vcenter_fqdn, user=vcenter_user, pwd=vcenter_pass, port=443)
-cluster = getClusterInstance('Packet-1', si)
+cluster = getClusterInstance('Metal-1', si)
 vcMos = vsanapiutils.GetVsanVcMos(si._stub, context=context)
 vsanClusterSystem = vcMos['vsan-cluster-config-system']
 vsanVcDiskManagementSystem = vcMos['vsan-disk-management-system']

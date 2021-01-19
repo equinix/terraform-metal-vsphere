@@ -5,7 +5,7 @@ variable "organization_id" {
 }
 
 variable "project_name" {
-  default = "vmware-on-packet-1"
+  default = "vmware-on-metal-1"
 }
 
 /*
@@ -101,7 +101,7 @@ variable "vcenter_portgroup_name" {
 }
 
 variable "domain_name" {
-  default = "packet.local"
+  default = "metal.local"
 }
 
 variable "vpn_user" {
@@ -109,11 +109,11 @@ variable "vpn_user" {
 }
 
 variable "vcenter_datacenter_name" {
-  default = "Packet"
+  default = "Metal"
 }
 
 variable "vcenter_cluster_name" {
-  default = "Packet-1"
+  default = "Metal-1"
 }
 
 variable "vcenter_domain" {
