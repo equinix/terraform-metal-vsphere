@@ -136,5 +136,10 @@ variable "s3_access_key" {
 variable "s3_secret_key" {
 }
 
+variable "s3_version" {
+  description = "S3 API Version (S3v2, S3v4)"
+  default     = "S3v4"
+}
+
 variable "vcenter_iso_name" {
 }
