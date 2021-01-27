@@ -2,9 +2,23 @@ provider "metal" {
   auth_token = var.auth_token
 }
 
+locals {
+  timestamp              = "${timestamp()}"
+  timestamp_sanitized    = "${replace("${local.timestamp}", "/[-| |T|Z|:]/", "")}"
+  project_name_sanitized = "${replace("${var.project_name}", "/[ ]/", "_")}"
+  ssh_key_name           = "${local.project_name_sanitized}-${local.timestamp_sanitized}-key"
+}
+
 resource "metal_project" "new_project" {
+  count           = var.create_project ? 1 : 0
   name            = var.project_name
   organization_id = var.organization_id
+}
+
+locals {
+  depends_on = [metal_project.new_project]
+  count      = var.create_project ? 1 : 0
+  project_id = var.create_project ? metal_project.new_project[0].id : local.project_id
 }
 
 resource "tls_private_key" "ssh_key_pair" {
@@ -13,20 +27,32 @@ resource "tls_private_key" "ssh_key_pair" {
 }
 
 resource "metal_ssh_key" "ssh_pub_key" {
-  name       = var.project_name
+  depends_on = [metal_project.new_project]
+  project_id = local.project_id
+  name       = local.ssh_key_name
   public_key = chomp(tls_private_key.ssh_key_pair.public_key_openssh)
+}
+
+resource "local_file" "project_private_key_pem" {
+  content         = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+  filename        = pathexpand("~/.ssh/${local.ssh_key_name}")
+  file_permission = "0600"
+
+  provisioner "local-exec" {
+    command = "cp ~/.ssh/${local.ssh_key_name} ~/.ssh/${local.ssh_key_name}.bak"
+  }
 }
 
 resource "metal_reserved_ip_block" "ip_blocks" {
   count      = length(var.public_subnets)
-  project_id = metal_project.new_project.id
+  project_id = local.project_id
   facility   = var.facility
   quantity   = element(var.public_subnets.*.ip_count, count.index)
 }
 
 resource "metal_reserved_ip_block" "esx_ip_blocks" {
   count      = var.esxi_host_count
-  project_id = metal_project.new_project.id
+  project_id = local.project_id
   facility   = var.facility
   quantity   = 8
 }
@@ -34,26 +60,15 @@ resource "metal_reserved_ip_block" "esx_ip_blocks" {
 resource "metal_vlan" "private_vlans" {
   count       = length(var.private_subnets)
   facility    = var.facility
-  project_id  = metal_project.new_project.id
+  project_id  = local.project_id
   description = jsonencode(element(var.private_subnets.*.name, count.index))
 }
 
 resource "metal_vlan" "public_vlans" {
   count       = length(var.public_subnets)
   facility    = var.facility
-  project_id  = metal_project.new_project.id
+  project_id  = local.project_id
   description = jsonencode(element(var.public_subnets.*.name, count.index))
-}
-data "template_file" "user_data" {
-  template = file("${path.module}/templates/user_data.py")
-  vars = {
-    private_subnets = jsonencode(var.private_subnets)
-    private_vlans   = jsonencode(metal_vlan.private_vlans.*.vxlan)
-    public_subnets  = jsonencode(var.public_subnets)
-    public_vlans    = jsonencode(metal_vlan.public_vlans.*.vxlan)
-    public_cidrs    = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
-    domain_name     = var.domain_name
-  }
 }
 
 resource "metal_device" "router" {
@@ -65,8 +80,7 @@ resource "metal_device" "router" {
   facilities       = [var.facility]
   operating_system = var.router_os
   billing_cycle    = var.billing_cycle
-  project_id       = metal_project.new_project.id
-  user_data        = data.template_file.user_data.rendered
+  project_id       = local.project_id
 }
 
 resource "metal_device_network_type" "router" {
@@ -99,6 +113,7 @@ resource "metal_ip_attachment" "block_assignment" {
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
 }
+
 resource "metal_device" "esxi_hosts" {
   count            = var.esxi_host_count
   hostname         = format("%s%02d", var.esxi_hostname, count.index + 1)
@@ -106,7 +121,7 @@ resource "metal_device" "esxi_hosts" {
   facilities       = [var.facility]
   operating_system = var.vmware_os
   billing_cycle    = var.billing_cycle
-  project_id       = metal_project.new_project.id
+  project_id       = local.project_id
   ip_address {
     type            = "public_ipv4"
     cidr            = 29
@@ -147,16 +162,55 @@ resource "metal_port_vlan_attachment" "esxi_pub_vlan_attach" {
 data "template_file" "download_vcenter" {
   template = file("${path.module}/templates/download_vcenter.sh")
   vars = {
+    gcs_bucket_name         = var.gcs_bucket_name
+    storage_reader_key_name = var.storage_reader_key_name
+    s3_boolean              = var.s3_boolean
     s3_url           = var.s3_url
     s3_access_key    = var.s3_access_key
     s3_secret_key    = var.s3_secret_key
     s3_bucket_name   = var.s3_bucket_name
     s3_version       = var.s3_version
     vcenter_iso_name = var.vcenter_iso_name
+    ssh_private_key         = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+  }
+}
+
+data "template_file" "pre_reqs" {
+  template = file("${path.module}/templates/pre_reqs.py")
+  vars = {
+    private_subnets = jsonencode(var.private_subnets)
+    private_vlans   = jsonencode(metal_vlan.private_vlans.*.vxlan)
+    public_subnets  = jsonencode(var.public_subnets)
+    public_vlans    = jsonencode(metal_vlan.public_vlans.*.vxlan)
+    public_cidrs    = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
+    domain_name     = var.domain_name
+  }
+}
+
+resource "null_resource" "run_pre_reqs" {
+  connection {
+    type        = "ssh"
+    user        = "root"
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    host        = metal_device.router.access_public_ipv4
+  }
+
+  provisioner "remote-exec" {
+    inline = ["mkdir -p $HOME/bootstrap/"]
+  }
+
+  provisioner "file" {
+    content     = data.template_file.pre_reqs.rendered
+    destination = "$HOME/bootstrap/pre_reqs.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = ["bash $HOME/bootstrap/pre_reqs.sh"]
   }
 }
 
 resource "null_resource" "download_vcenter_iso" {
+  depends_on = [null_resource.run_pre_reqs]
   connection {
     type        = "ssh"
     user        = "root"
@@ -166,17 +220,14 @@ resource "null_resource" "download_vcenter_iso" {
 
   provisioner "file" {
     content     = data.template_file.download_vcenter.rendered
-    destination = "/root/download_vcenter.sh"
+    destination = "$HOME/bootstrap/download_vcenter.sh"
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "cd /root",
-      "chmod +x /root/download_vcenter.sh",
-      "/root/download_vcenter.sh"
-    ]
+    inline = ["bash $HOME/bootstrap/download_vcenter.sh"]
   }
 }
+
 resource "random_string" "ipsec_psk" {
   length           = 20
   min_upper        = 2

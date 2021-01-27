@@ -8,6 +8,16 @@ variable "project_name" {
   default = "vmware-on-metal-1"
 }
 
+variable "create_project" {
+  description = "if true create the packet project, if not skip and use the provided project"
+  default     = true
+}
+
+variable "project_id" {
+  description = "Packet Project ID to use in case create_project is false"
+  default     = "null"
+}
+
 /*
 Valid vsphere_service_types are:
     faultToleranceLogging
@@ -55,7 +65,7 @@ variable "public_subnets" {
       "nat" : false,
       "vsphere_service_type" : null,
       "routable" : true,
-      "ip_count" : 4
+      "ip_count" : 8
     }
   ]
 }
@@ -134,6 +144,18 @@ variable "s3_access_key" {
 }
 
 variable "s3_secret_key" {
+}
+
+variable "s3_boolean" {
+  default = "false"
+}
+
+variable "gcs_bucket_name" {
+  default = "vmware"
+}
+
+variable "storage_reader_key_name" {
+  default = "storage-reader-key.json"
 }
 
 variable "s3_version" {
