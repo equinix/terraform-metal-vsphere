@@ -1,9 +1,9 @@
 output "VPN_Endpoint" {
-  value = packet_device.router.access_public_ipv4
+  value = metal_device.router.access_public_ipv4
 }
 
 output "VPN_PSK" {
- value = random_string.ipsec_psk.result
+  value = random_string.ipsec_psk.result
 }
 
 output "VPN_User" {
@@ -15,7 +15,7 @@ output "VPN_Pasword" {
 }
 
 output "vCenter_FQDN" {
-  value = "vcva.packet.local"
+  value = "vcva.metal.local"
 }
 
 output "vCenter_Username" {
