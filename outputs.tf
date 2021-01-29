@@ -30,3 +30,6 @@ output "vCenter_Appliance_Root_Password" {
   value = random_string.vcenter_password.result
 }
 
+output "SSH_Key_Location" {
+  value = "$HOME/.ssh/${local.ssh_key_name}"
+}

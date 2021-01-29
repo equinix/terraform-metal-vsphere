@@ -270,6 +270,8 @@ def main():
     print("Updating vSwitch Uplinks...")
     str_active_uplinks = ",".join(map(str, active_uplinks))
     str_backup_uplinks = ",".join(map(str, backup_uplinks))
+    # This must be done this way because we will be disconnected from the host after this script runs.
+    # This script will hang forever and never give an exit code.
     cmd_str = "python3 /root/update_uplinks.py --host '{}' --user '{}' --pass '{}' --vswitch '{}' --active-uplinks '{}' --backup-uplinks '{}'".format(
                                             new_ip, options.user, options.pw, vswitch_name, str_active_uplinks, str_backup_uplinks)
     Popen([cmd_str], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
@@ -291,25 +293,25 @@ def main():
     for subnet in subnets:
         print("Removing vLan {} from unbonded port".format(subnet['vlan']))
         attempt = 0
-        for attempt in range(1,5):
+        for attempt in range(1,10):
             try:
                 manager.remove_port(unbonded_port, subnet['vlan'])
                 break
             except Exception:
-                if attempt == 5:
-                    print("Tried to remove vLan five times and failed. Exiting...")
+                if attempt == 10:
+                    print("Tried to remove vLan ten times and failed. Exiting...")
                     sys.exit(1)
                 print("Failed to remove vlan, trying again...")
                 sleep(5)
     print("Rebonding Ports...")
     attempt = 0
-    for attempt in range(1,5):
+    for attempt in range(1,10):
         try:
             manager.bond_ports(bond_port, True)
             break
         except Exception:
-            if attempt == 5:
-                print("Tried to bond ports five times and failed. Exiting...")
+            if attempt == 10:
+                print("Tried to bond ports ten times and failed. Exiting...")
                 sys.exit(1)
             print("Failed to bond ports, trying again...")
             sleep(5)
@@ -317,31 +319,35 @@ def main():
         if n == 0:
             print("Adding vLan {} to bond".format(subnets[n]['vlan']))
             attempt = 0
-            for attempt in range(1,5):
+            for attempt in range(1,10):
                 try:
                     manager.convert_layer_2(bond_port, subnets[n]['vlan'])
                     break
                 except Exception:
-                    if attempt == 5:
-                        print("Tried to convert bond to Layer 2 five times and failed. Exiting...")
+                    if attempt == 10:
+                        print("Tried to convert bond to Layer 2 ten times and failed. Exiting...")
                         sys.exit(1)
                     print("Failed to convert bond to Layer 2, trying again...")
                     sleep(5)
         else:
             print("Adding vLan {} to bond".format(subnets[n]['vlan']))
             attempt = 0
-            for attempt in range(1,5):
+            for attempt in range(1,10):
                 try:
                     manager.assign_port(bond_port, subnets[n]['vlan'])
                     break
                 except Exception:
-                    if attempt == 5:
-                        print("Tried to add vLan to bond five times and failed. Exiting...")
+                    if attempt == 10:
+                        print("Tried to add vLan to bond ten times and failed. Exiting...")
                         sys.exit(1)
                     print("Failed to add vLan to bond, trying again...")
                     sleep(5)
     # Clean up IP Reservations
-    manager.delete_ip(options.ipRes)
+    try:
+        manager.delete_ip(options.ipRes)
+    except Exception:
+        print("Failed to cleanup ip reservation... These IPs will cost you some money. You may clean them up manually.")
+
 
 # Start program
 if __name__ == "__main__":

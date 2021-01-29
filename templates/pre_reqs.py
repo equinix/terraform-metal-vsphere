@@ -38,8 +38,10 @@ os.system("systemctl stop systemd-resolved")
 os.system("systemctl disable systemd-resolved")
 
 # Install Apt Packages
+os.system("echo 'deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main' > /etc/apt/sources.list.d/google-cloud-sdk.list")
+os.system("curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -")
 os.system('DEBIAN_FRONTEND=noninteractive apt-get update -y')
-os.system('DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip')
+os.system('DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip expect unzip google-cloud-sdk')
 
 # Build single subnet map with all vlans, cidrs, etc...
 subnets = json.loads(private_subnets)
@@ -107,12 +109,18 @@ for subnet in subnets:
         # Find vCenter IP
         if subnet['vsphere_service_type'] == 'management':
             vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
+            management_gateway = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
+            sed_cmd = "sed -i '1i nameserver " + management_gateway + "' /etc/resolv.conf"
+            os.system(sed_cmd)
         # Gather network facts about this subnet
         router_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
         low_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
-        high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-1].compressed
+        if 'reserved_ip_count' in subnet:
+          high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-subnet['reserved_ip_count']].compressed
+        else:
+          high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-1].compressed
         netmask = ipaddress.ip_network(subnet['cidr']).netmask.compressed
-
+        
         # Setup vLan interface for this subnet
         interface_file.write("\nauto {}.{}\n".format(interface, subnet['vlan']))
         interface_file.write("iface {}.{} inet static\n".format(interface, subnet['vlan']))

@@ -121,6 +121,3 @@ for host,disks in diskmap.items():
         tasks.append(task)
     except expression as identifier:
         print("Some vSan Claim error... Check vSan...")
-    
-
-    
