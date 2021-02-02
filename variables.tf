@@ -4,7 +4,7 @@ variable "auth_token" {
 }
 
 variable "organization_id" {
-  description = "Your Exuinix Metal Organization Id"
+  description = "Your Equinix Metal Organization Id"
   default     = "null"
   type        = string
 }
@@ -45,7 +45,7 @@ variable "private_subnets" {
       "vsphere_service_type" : "management",
       "routable" : true,
       "cidr" : "172.16.0.0/24",
-      "reserved_ip_count" = 100
+      "reserved_ip_count" : 100
     },
     {
       "name" : "vMotion",
@@ -101,7 +101,7 @@ variable "router_os" {
 }
 
 variable "vmware_os" {
-  default = "vmware_esxi_6_7"
+  default = "vmware_esxi_7_0"
 }
 
 variable "billing_cycle" {
