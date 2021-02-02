@@ -1,7 +1,12 @@
 variable "auth_token" {
+  description = "This is your Packet API Auth token. This can also be specified with the TF_VAR_PACKET_AUTH_TOKEN shell environment variable."
+  type        = string
 }
 
 variable "organization_id" {
+  description = "Your Exuinix Metal Organization Id"
+  default     = "null"
+  type        = string
 }
 
 variable "project_name" {
@@ -39,7 +44,8 @@ variable "private_subnets" {
       "nat" : true,
       "vsphere_service_type" : "management",
       "routable" : true,
-      "cidr" : "172.16.0.0/24"
+      "cidr" : "172.16.0.0/24",
+      "reserved_ip_count" = 100
     },
     {
       "name" : "vMotion",
@@ -87,7 +93,7 @@ variable "esxi_size" {
 }
 
 variable "facility" {
-  default = "dfw2"
+  default = "ny5"
 }
 
 variable "router_os" {
@@ -95,7 +101,7 @@ variable "router_os" {
 }
 
 variable "vmware_os" {
-  default = "vmware_esxi_7_0"
+  default = "vmware_esxi_6_7"
 }
 
 variable "billing_cycle" {
@@ -107,7 +113,7 @@ variable "esxi_host_count" {
 }
 
 variable "vcenter_portgroup_name" {
-  default = "VM Private Net 1"
+  default = "VM Public Net 1"
 }
 
 variable "domain_name" {
@@ -135,26 +141,31 @@ variable "vcenter_user_name" {
 }
 
 variable "s3_url" {
+  default = "https://s3.example.com"
 }
 
 variable "s3_bucket_name" {
+  default = "vmware"
 }
 
 variable "s3_access_key" {
+  default = "S3_ACCESS_KEY"
 }
 
 variable "s3_secret_key" {
+  default = "S3_SECRET_KEY"
 }
 
 variable "s3_boolean" {
-  default = "false"
+  description = "If true use S3 API to download vCenter else use GCS"
+  default     = true
 }
 
 variable "gcs_bucket_name" {
   default = "vmware"
 }
 
-variable "storage_reader_key_name" {
+variable "relative_path_to_gcs_key" {
   default = "storage-reader-key.json"
 }
 
@@ -164,4 +175,6 @@ variable "s3_version" {
 }
 
 variable "vcenter_iso_name" {
+  description = "The name of the vCenter ISO in your Object Store"
+  type        = string
 }

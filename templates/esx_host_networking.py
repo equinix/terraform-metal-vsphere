@@ -163,7 +163,6 @@ def main():
         print("ERROR: Missing arguments")
         parser.print_usage()
         sys.exit(1)
-    print(options)
 
     host, si = connect_to_host(options.host, options.user, options.pw)
     if si is None or host is None:
@@ -272,7 +271,7 @@ def main():
     str_backup_uplinks = ",".join(map(str, backup_uplinks))
     # This must be done this way because we will be disconnected from the host after this script runs.
     # This script will hang forever and never give an exit code.
-    cmd_str = "python3 /root/update_uplinks.py --host '{}' --user '{}' --pass '{}' --vswitch '{}' --active-uplinks '{}' --backup-uplinks '{}'".format(
+    cmd_str = "python3 $HOME/bootstrap/update_uplinks.py --host '{}' --user '{}' --pass '{}' --vswitch '{}' --active-uplinks '{}' --backup-uplinks '{}'".format(
                                             new_ip, options.user, options.pw, vswitch_name, str_active_uplinks, str_backup_uplinks)
     Popen([cmd_str], shell=True, stdin=None, stdout=None, stderr=None, close_fds=True)
 

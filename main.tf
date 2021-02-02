@@ -3,10 +3,10 @@ provider "metal" {
 }
 
 locals {
-  timestamp              = "${timestamp()}"
-  timestamp_sanitized    = "${replace("${local.timestamp}", "/[-| |T|Z|:]/", "")}"
-  project_name_sanitized = "${replace("${var.project_name}", "/[ ]/", "_")}"
-  ssh_key_name           = "${local.project_name_sanitized}-${local.timestamp_sanitized}-key"
+  ssh_user               = "root"
+  timestamp_sanitized    = replace(timestamp(), "/[-| |T|Z|:]/", "")
+  project_name_sanitized = replace(var.project_name, "/[ ]/", "_")
+  ssh_key_name           = format("%s-%s-key", local.project_name_sanitized, local.timestamp_sanitized)
 }
 
 resource "metal_project" "new_project" {
@@ -18,7 +18,7 @@ resource "metal_project" "new_project" {
 locals {
   depends_on = [metal_project.new_project]
   count      = var.create_project ? 1 : 0
-  project_id = var.create_project ? metal_project.new_project[0].id : local.project_id
+  project_id = var.create_project ? metal_project.new_project[0].id : var.project_id
 }
 
 resource "tls_private_key" "ssh_key_pair" {
@@ -28,7 +28,6 @@ resource "tls_private_key" "ssh_key_pair" {
 
 resource "metal_ssh_key" "ssh_pub_key" {
   depends_on = [metal_project.new_project]
-  project_id = local.project_id
   name       = local.ssh_key_name
   public_key = chomp(tls_private_key.ssh_key_pair.public_key_openssh)
 }
@@ -72,9 +71,7 @@ resource "metal_vlan" "public_vlans" {
 }
 
 resource "metal_device" "router" {
-  depends_on = [
-    metal_ssh_key.ssh_pub_key
-  ]
+  depends_on       = [metal_ssh_key.ssh_pub_key]
   hostname         = var.router_hostname
   plan             = var.router_size
   facilities       = [var.facility]
@@ -90,31 +87,29 @@ resource "metal_device_network_type" "router" {
 
 resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
   depends_on = [metal_device_network_type.router]
-
-  count     = length(metal_vlan.private_vlans)
-  device_id = metal_device.router.id
-  port_name = "eth1"
-  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
+  count      = length(metal_vlan.private_vlans)
+  device_id  = metal_device.router.id
+  port_name  = "eth1"
+  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
 }
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
   depends_on = [metal_device_network_type.router]
-
-  count     = length(metal_vlan.public_vlans)
-  device_id = metal_device.router.id
-  port_name = "eth1"
-  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
+  count      = length(metal_vlan.public_vlans)
+  device_id  = metal_device.router.id
+  port_name  = "eth1"
+  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
 }
 
 resource "metal_ip_attachment" "block_assignment" {
-  depends_on = [metal_device_network_type.router]
-
+  depends_on    = [metal_device_network_type.router]
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
 }
 
 resource "metal_device" "esxi_hosts" {
+  depends_on       = [metal_ssh_key.ssh_pub_key]
   count            = var.esxi_host_count
   hostname         = format("%s%02d", var.esxi_hostname, count.index + 1)
   plan             = var.esxi_size
@@ -143,36 +138,19 @@ resource "metal_device_network_type" "esxi_hosts" {
 
 resource "metal_port_vlan_attachment" "esxi_priv_vlan_attach" {
   depends_on = [metal_device_network_type.esxi_hosts]
-
-  count     = length(metal_device.esxi_hosts) * length(metal_vlan.private_vlans)
-  device_id = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.private_vlans)))
-  port_name = "eth1"
-  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
+  count      = length(metal_device.esxi_hosts) * length(metal_vlan.private_vlans)
+  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.private_vlans)))
+  port_name  = "eth1"
+  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
 }
 
 
 resource "metal_port_vlan_attachment" "esxi_pub_vlan_attach" {
   depends_on = [metal_device_network_type.esxi_hosts]
-
-  count     = length(metal_device.esxi_hosts) * length(metal_vlan.public_vlans)
-  device_id = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.public_vlans)))
-  port_name = "eth1"
-  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
-}
-data "template_file" "download_vcenter" {
-  template = file("${path.module}/templates/download_vcenter.sh")
-  vars = {
-    gcs_bucket_name         = var.gcs_bucket_name
-    storage_reader_key_name = var.storage_reader_key_name
-    s3_boolean              = var.s3_boolean
-    s3_url           = var.s3_url
-    s3_access_key    = var.s3_access_key
-    s3_secret_key    = var.s3_secret_key
-    s3_bucket_name   = var.s3_bucket_name
-    s3_version       = var.s3_version
-    vcenter_iso_name = var.vcenter_iso_name
-    ssh_private_key         = chomp(tls_private_key.ssh_key_pair.private_key_pem)
-  }
+  count      = length(metal_device.esxi_hosts) * length(metal_vlan.public_vlans)
+  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.public_vlans)))
+  port_name  = "eth1"
+  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
 }
 
 data "template_file" "pre_reqs" {
@@ -184,13 +162,14 @@ data "template_file" "pre_reqs" {
     public_vlans    = jsonencode(metal_vlan.public_vlans.*.vxlan)
     public_cidrs    = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
     domain_name     = var.domain_name
+    vcenter_network = var.vcenter_portgroup_name
   }
 }
 
 resource "null_resource" "run_pre_reqs" {
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
@@ -201,21 +180,56 @@ resource "null_resource" "run_pre_reqs" {
 
   provisioner "file" {
     content     = data.template_file.pre_reqs.rendered
-    destination = "$HOME/bootstrap/pre_reqs.sh"
+    destination = "$HOME/bootstrap/pre_reqs.py"
   }
 
   provisioner "remote-exec" {
-    inline = ["bash $HOME/bootstrap/pre_reqs.sh"]
+    inline = ["python3 $HOME/bootstrap/pre_reqs.py"]
+  }
+}
+
+data "template_file" "download_vcenter" {
+  template = file("${path.module}/templates/download_vcenter.sh")
+  vars = {
+    gcs_bucket_name  = var.gcs_bucket_name
+    s3_boolean       = var.s3_boolean
+    s3_url           = var.s3_url
+    s3_access_key    = var.s3_access_key
+    s3_secret_key    = var.s3_secret_key
+    s3_bucket_name   = var.s3_bucket_name
+    s3_version       = var.s3_version
+    vcenter_iso_name = var.vcenter_iso_name
+    ssh_private_key  = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+  }
+}
+
+resource "null_resource" "copy_gcs_key" {
+  count      = var.s3_boolean ? 0 : 1
+  depends_on = [null_resource.run_pre_reqs]
+  connection {
+    type        = "ssh"
+    user        = local.ssh_user
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    host        = metal_device.router.access_public_ipv4
+  }
+  provisioner "file" {
+    content     = file("${path.module}/${var.relative_path_to_gcs_key}")
+    destination = "$HOME/bootstrap/gcp_storage_reader.json"
   }
 }
 
 resource "null_resource" "download_vcenter_iso" {
-  depends_on = [null_resource.run_pre_reqs]
+  depends_on = [null_resource.copy_gcs_key]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
+  }
+
+  provisioner "file" {
+    content     = data.template_file.download_vcenter.rendered
+    destination = "$HOME/bootstrap/download_vcenter.sh"
   }
 
   provisioner "file" {
@@ -259,22 +273,18 @@ resource "null_resource" "install_vpn_server" {
   depends_on = [null_resource.download_vcenter_iso]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "file" {
     content     = data.template_file.vpn_installer.rendered
-    destination = "/root/vpn_installer.sh"
+    destination = "$HOME/bootstrap/vpn_installer.sh"
   }
 
   provisioner "remote-exec" {
-    inline = [
-      "cd /root",
-      "chmod +x /root/vpn_installer.sh",
-      "/root/vpn_installer.sh"
-    ]
+    inline = ["bash $HOME/bootstrap/vpn_installer.sh"]
   }
 }
 
@@ -309,28 +319,31 @@ data "template_file" "vcva_template" {
 }
 
 resource "null_resource" "copy_vcva_template" {
+  depends_on = [null_resource.run_pre_reqs]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
   provisioner "file" {
     content     = data.template_file.vcva_template.rendered
-    destination = "/root/vcva_template.json"
+    destination = "$HOME/bootstrap/vcva_template.json"
   }
 }
+
 resource "null_resource" "copy_update_uplinks" {
+  depends_on = [null_resource.run_pre_reqs]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "file" {
     content     = file("${path.module}/templates/update_uplinks.py")
-    destination = "/root/update_uplinks.py"
+    destination = "$HOME/bootstrap/update_uplinks.py"
   }
 }
 
@@ -348,16 +361,17 @@ data "template_file" "esx_host_networking" {
 }
 
 resource "null_resource" "esx_network_prereqs" {
+  depends_on = [null_resource.run_pre_reqs]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "file" {
     content     = data.template_file.esx_host_networking.rendered
-    destination = "/root/esx_host_networking.py"
+    destination = "$HOME/bootstrap/esx_host_networking.py"
   }
 }
 
@@ -367,20 +381,22 @@ resource "null_resource" "apply_esx_network_config" {
     metal_port_vlan_attachment.esxi_priv_vlan_attach,
     metal_port_vlan_attachment.esxi_pub_vlan_attach,
     null_resource.esx_network_prereqs,
-    null_resource.copy_update_uplinks
+    null_resource.copy_update_uplinks,
+    null_resource.install_vpn_server
   ]
 
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "remote-exec" {
-    inline = ["python3 /root/esx_host_networking.py --host '${element(metal_device.esxi_hosts.*.access_public_ipv4, count.index)}' --user root --pass '${element(metal_device.esxi_hosts.*.root_password, count.index)}' --id '${element(metal_device.esxi_hosts.*.id, count.index)}' --index ${count.index} --ipRes ${element(metal_reserved_ip_block.esx_ip_blocks.*.id, count.index)}"]
+    inline = ["python3 $HOME/bootstrap/esx_host_networking.py --host '${element(metal_device.esxi_hosts.*.access_public_ipv4, count.index)}' --user root --pass '${element(metal_device.esxi_hosts.*.root_password, count.index)}' --id '${element(metal_device.esxi_hosts.*.id, count.index)}' --index ${count.index} --ipRes ${element(metal_reserved_ip_block.esx_ip_blocks.*.id, count.index)}"]
   }
 }
+
 data "template_file" "deploy_vcva_script" {
   template = file("${path.module}/templates/deploy_vcva.py")
   vars = {
@@ -394,6 +410,7 @@ data "template_file" "deploy_vcva_script" {
     cluster_name    = var.vcenter_cluster_name
     vcenter_user    = var.vcenter_user_name
     vcenter_domain  = var.vcenter_domain
+    domain_name     = var.domain_name
   }
 }
 
@@ -409,30 +426,62 @@ data "template_file" "claim_vsan_disks" {
 }
 
 resource "null_resource" "deploy_vcva" {
-  depends_on = [null_resource.apply_esx_network_config]
+  depends_on = [
+    null_resource.apply_esx_network_config,
+    null_resource.download_vcenter_iso
+  ]
   connection {
     type        = "ssh"
-    user        = "root"
+    user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "file" {
+    source      = "templates/extend_datastore.sh"
+    destination = "$HOME/bootstrap/extend_datastore.sh"
+  }
+
+  provisioner "file" {
     content     = data.template_file.claim_vsan_disks.rendered
-    destination = "/root/vsan_claim.py"
+    destination = "$HOME/bootstrap/vsan_claim.py"
   }
 
   provisioner "file" {
     content     = data.template_file.deploy_vcva_script.rendered
-    destination = "/root/deploy_vcva.py"
+    destination = "$HOME/bootstrap/deploy_vcva.py"
+  }
+
+  provisioner "remote-exec" {
+    inline = ["python3 $HOME/bootstrap/deploy_vcva.py"]
+  }
+}
+
+resource "null_resource" "vsan_claim" {
+  depends_on = [null_resource.deploy_vcva]
+  count      = var.esxi_host_count == 1 ? 0 : 1
+  connection {
+    type        = "ssh"
+    user        = local.ssh_user
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    host        = metal_device.router.access_public_ipv4
   }
 
   provisioner "remote-exec" {
     inline = [
-      "python3 /root/deploy_vcva.py",
+      "echo 'vCenter Deployed... Waiting 60 seconds before configuring vSan...'",
       "sleep 60",
-      "python3 /root/vsan_claim.py"
+      "python3 $HOME/bootstrap/vsan_claim.py"
     ]
   }
 }
 
+data "external" "get_vcenter_ip" {
+  program = ["python3", "${path.module}/scripts/get_vcenter_ip.py"]
+  query = {
+    "private_subnets" = jsonencode(var.private_subnets)
+    "public_subnets"  = jsonencode(var.public_subnets)
+    "public_cidrs"    = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
+    "vcenter_network" = var.vcenter_portgroup_name
+  }
+}

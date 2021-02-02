@@ -23,7 +23,7 @@ mkdir -p $BASE_DIR
 cd $BASE_DIR
 if [ $s3_boolean = "false" ]; then
   echo "USING GCS"
-  gcloud auth activate-service-account --key-file=$HOME/anthos/gcp_keys/${storage_reader_key_name}
+  gcloud auth activate-service-account --key-file=$HOME/bootstrap/gcp_storage_reader.json
   gsutil cp gs://${gcs_bucket_name}/${vcenter_iso_name} .
   gsutil cp gs://${gcs_bucket_name}/vsanapiutils.py .
   gsutil cp gs://${gcs_bucket_name}/vsanmgmtObjects.py .

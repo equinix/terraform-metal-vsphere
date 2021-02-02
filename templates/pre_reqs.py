@@ -1,6 +1,5 @@
 #!/usr/bin/python3
 import json
-import apt
 import os
 import ipaddress
 import urllib.request as urllib2
@@ -13,6 +12,7 @@ public_subnets = '${public_subnets}'
 public_vlans = '${public_vlans}'
 public_cidrs = '${public_cidrs}'
 domain_name = '${domain_name}'
+vcenter_network = '${vcenter_network}'
 
 
 def words_list():
@@ -105,10 +105,11 @@ dnsmasq_conf = open('/etc/dnsmasq.d/dhcp.conf', 'w')
 
 # Loop though all subnets and setup Interfaces, DNSMasq, & IPTables
 for subnet in subnets:
+    if subnet['name'] == vcenter_network:
+        vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
     if subnet['routable']:
         # Find vCenter IP
         if subnet['vsphere_service_type'] == 'management':
-            vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
             management_gateway = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
             sed_cmd = "sed -i '1i nameserver " + management_gateway + "' /etc/resolv.conf"
             os.system(sed_cmd)

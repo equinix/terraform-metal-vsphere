@@ -22,11 +22,11 @@
       ],
       "prefix": "__VCENTER_PREFIX_LENGTH__",
       "gateway": "__VCENTER_GATEWAY__",
-      "system_name": "vcva.${domain_name}"
+      "system_name": "__VCENTER_IP__"
     },
     "os": {
       "password": "${vcenter_password}",
-      "ntp_servers": "time.nist.gov",
+      "ntp_servers": "129.6.15.27, 132.163.96.2, 132.163.97.3",
       "ssh_enable": true
     },
     "sso": {
