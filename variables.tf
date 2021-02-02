@@ -67,7 +67,7 @@ variable "private_subnets" {
 }
 
 variable "public_subnets" {
-  desdescription = "This will dynamically create public subnets in vSphere"
+  description = "This will dynamically create public subnets in vSphere"
   default = [
     {
       "name" : "VM Public Net 1",
@@ -85,7 +85,7 @@ variable "router_hostname" {
 }
 
 variable "esxi_hostname" {
-  desdescription = "This is the hostname prefix for your esxi hosts. A number will be added to the end."
+  description = "This is the hostname prefix for your esxi hosts. A number will be added to the end."
   default        = "esx"
 }
 
