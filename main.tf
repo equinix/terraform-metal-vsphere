@@ -2,11 +2,16 @@ provider "metal" {
   auth_token = var.auth_token
 }
 
+resource "random_string" "ssh_unique" {
+  length  = 5
+  special = false
+  upper   = false
+}
+
 locals {
   ssh_user               = "root"
-  timestamp_sanitized    = replace(timestamp(), "/[-| |T|Z|:]/", "")
   project_name_sanitized = replace(var.project_name, "/[ ]/", "_")
-  ssh_key_name           = format("%s-%s-key", local.project_name_sanitized, local.timestamp_sanitized)
+  ssh_key_name           = format("%s-%s-key", local.project_name_sanitized, random_string.ssh_unique.result)
 }
 
 resource "metal_project" "new_project" {
