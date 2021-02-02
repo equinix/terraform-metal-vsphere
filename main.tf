@@ -477,6 +477,8 @@ resource "null_resource" "vsan_claim" {
 }
 
 data "external" "get_vcenter_ip" {
+  # The following command will test this script
+  # echo '{"private_subnets":"[{\"cidr\":\"172.16.0.0/24\",\"name\":\"VM Private Net 1\",\"nat\":true,\"reserved_ip_count\":100,\"routable\":true,\"vsphere_service_type\":\"management\"},{\"cidr\":\"172.16.1.0/24\",\"name\":\"vMotion\",\"nat\":false,\"routable\":false,\"vsphere_service_type\":\"vmotion\"},{\"cidr\":\"172.16.2.0/24\",\"name\":\"vSAN\",\"nat\":false,\"routable\":false,\"vsphere_service_type\":\"vsan\"}]","public_cidrs":"[\"147.75.35.160/29\"]","public_subnets":"[{\"ip_count\":8,\"name\":\"VM Public Net 1\",\"nat\":false,\"routable\":true,\"vsphere_service_type\":null}]","vcenter_network":"VM Public Net 1"}' | python3 get_vcenter_ip.py
   program = ["python3", "${path.module}/scripts/get_vcenter_ip.py"]
   query = {
     "private_subnets" = jsonencode(var.private_subnets)
