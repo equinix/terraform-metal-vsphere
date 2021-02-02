@@ -58,7 +58,7 @@ You will need to find the two individual Python files in the vSAN SDK zip file a
 
 There are many variables which can be set to customize your install within `vars.tf`. The default variables to bring up a 3 node vSphere cluster and linux router using Equinix Metal's [c3.medium.x86](https://metal.equinix.com/product/servers/). Change each default variable at your own risk.
 
-There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will need an S3 compatible object store to download "Closed Source" packages such as vCenter. You'll provide `s3_url`, `s3_bucket_name`, `s3_access_key`, `s3_secret_key` as well as the vCenter ISO file name as `vcenter_iso_name`.
+There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will need an S3 compatible object store to download "Closed Source" packages such as vCenter. You'll provide `s3_url`, `object_store_bucket_name`, `s3_access_key`, `s3_secret_key` as well as the vCenter ISO file name as `vcenter_iso_name`.
 
 Here is a quick command plus sample values to start file for you (make sure you adjust the variables to match your environment, pay special attention that the `vcenter_iso_name` matches whats in your bucket):
 
@@ -68,7 +68,7 @@ auth_token = "cefa5c94-e8ee-4577-bff8-1d1edca93ed8"
 organization_id = "42259e34-d300-48b3-b3e1-d5165cd14169" 
 project_name = "vmware-metal-project-1"
 s3_url = "https://s3.example.com" 
-s3_bucket_name = "vmware" 
+object_store_bucket_name = "vmware" 
 s3_access_key = "4fa85962-975f-4650-b603-17f1cb9dee10" 
 s3_secret_key = "becf3868-3f07-4dbb-a6d5-eacfd7512b09" 
 vcenter_iso_name = "VMware-VCSA-all-6.7.0-XXXXXXX.iso" 

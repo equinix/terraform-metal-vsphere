@@ -10,7 +10,7 @@ variable "organization_id" {
 }
 
 variable "project_name" {
-  default = "vmware-on-metal-1"
+  default     = "vmware-on-metal-1"
   description = "If 'create_project' is true this will be the project name used."
 }
 
@@ -81,122 +81,117 @@ variable "public_subnets" {
 
 variable "router_hostname" {
   description = "This is the hostname for the router."
-  default = "edge-gateway01"
+  default     = "edge-gateway01"
 }
 
 variable "esxi_hostname" {
-  "This is the hostname prefix for your esxi hosts. A number will be added to the end."
-  default = "esx"
+  desdescription = "This is the hostname prefix for your esxi hosts. A number will be added to the end."
+  default        = "esx"
 }
 
 variable "router_size" {
   description = "This is the size/plan/flavor of your router machine"
-  default = "c3.small.x86"
+  default     = "c3.small.x86"
 }
 
 variable "esxi_size" {
   description = "This is the size/plan/flavor of your ESXi machine(s)"
-  default = "c3.medium.x86"
+  default     = "c3.medium.x86"
 }
 
 variable "facility" {
   description = "This is the Region/Location of your deployment."
-  default = "ny5"
+  default     = "ny5"
 }
 
 variable "router_os" {
   description = "This is the operating System for you router machine (Only Ubuntu 18.04 has been tested)"
-  default = "ubuntu_18_04"
+  default     = "ubuntu_18_04"
 }
 
 variable "vmware_os" {
   description = "This is the version of vSphere that you want to deploy (ESXi 6.5, 6.7, & 7.0 have been tested)"
-  default = "vmware_esxi_7_0"
+  default     = "vmware_esxi_7_0"
 }
 
 variable "billing_cycle" {
   description = "This is billing cycle to use. The hasn't beend built to allow reserved isntances yet."
-  default = "hourly"
+  default     = "hourly"
 }
 
 variable "esxi_host_count" {
   description = "This is the number of ESXi host you'd like in your cluster."
-  default = 3
+  default     = 3
 }
 
 variable "vcenter_portgroup_name" {
-  description = "This is the VM Portgroup you would like vCenter to be deployed to. See 'private_subnets' & 'public_subnets' above."
-  default = "VM Public Net 1"
+  description = "This is the VM Portgroup you would like vCenter to be deployed to. See 'private_subnets' & 'public_subnets' above. By deploying on a public subnet, you will not need to use the VPN to access vCenter."
+  default     = "VM Public Net 1"
 }
 
 variable "domain_name" {
   description = "This is the domain to use for internal DNS"
-  default = "metal.local"
+  default     = "metal.local"
 }
 
 variable "vpn_user" {
   description = "This is the username for the L2TP VPN"
-  default = "vm_admin"
+  default     = "vm_admin"
 }
 
 variable "vcenter_datacenter_name" {
   description = "This will be the name of the vCenter Datacenter object."
-  default = "Metal"
+  default     = "Metal"
 }
 
 variable "vcenter_cluster_name" {
   description = "This will be the name of the vCenter Cluster object."
-  default = "Metal-1"
+  default     = "Metal-1"
 }
 
 variable "vcenter_domain" {
   description = "This will be the vSphere SSO domain."
-  default = "vsphere.local"
+  default     = "vsphere.local"
 }
 
 variable "vcenter_user_name" {
   description = "This will be the admin user for vSphere SSO"
-  default = "Administrator"
+  default     = "Administrator"
 }
 
 variable "s3_url" {
   description = "This is the URL endpoint to connect your s3 client to"
-  default = "https://s3.example.com"
-}
-
-variable "s3_bucket_name" {
-  description = "This is the name of your S3 bucket"
-  default = "vmware"
+  default     = "https://s3.example.com"
 }
 
 variable "s3_access_key" {
   description = "This is the access key for your S3 endpoint"
-  default = "S3_ACCESS_KEY"
+  default     = "S3_ACCESS_KEY"
 }
 
 variable "s3_secret_key" {
   description = "This is the secret key for your S3 endpoint"
-  default = "S3_SECRET_KEY"
-}
-
-variable "s3_boolean" {
-  description = "If true use S3 API to download vCenter else use GCS"
-  default     = true
-}
-
-variable "gcs_bucket_name" {
-  description = "This is the name of the GCS bucket"
-  default = "vmware"
-}
-
-variable "relative_path_to_gcs_key" {
-  description = "If you are using GCS to download you vCenter ISO this is the path to the GCS key"
-  default = "storage-reader-key.json"
+  default     = "S3_SECRET_KEY"
 }
 
 variable "s3_version" {
   description = "S3 API Version (S3v2, S3v4)"
   default     = "S3v4"
+}
+
+variable "object_store_tool" {
+  description = "Wich tool should you use to download objects from the object store? ('mc' and 'gcs' have been tested.)"
+  default     = "mc"
+}
+
+variable "object_store_bucket_name" {
+  description = "This is the name of the bucket on your Object Store"
+  default     = "vmware"
+}
+
+variable "relative_path_to_gcs_key" {
+  description = "If you are using GCS to download you vCenter ISO this is the path to the GCS key"
+  default     = "storage-reader-key.json"
 }
 
 variable "vcenter_iso_name" {

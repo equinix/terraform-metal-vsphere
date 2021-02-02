@@ -191,20 +191,19 @@ resource "null_resource" "run_pre_reqs" {
 data "template_file" "download_vcenter" {
   template = file("${path.module}/templates/download_vcenter.sh")
   vars = {
-    gcs_bucket_name  = var.gcs_bucket_name
-    s3_boolean       = var.s3_boolean
-    s3_url           = var.s3_url
-    s3_access_key    = var.s3_access_key
-    s3_secret_key    = var.s3_secret_key
-    s3_bucket_name   = var.s3_bucket_name
-    s3_version       = var.s3_version
-    vcenter_iso_name = var.vcenter_iso_name
-    ssh_private_key  = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    object_store_bucket_name = var.object_store_bucket_name
+    object_store_tool        = var.object_store_tool
+    s3_url                   = var.s3_url
+    s3_access_key            = var.s3_access_key
+    s3_secret_key            = var.s3_secret_key
+    s3_version               = var.s3_version
+    vcenter_iso_name         = var.vcenter_iso_name
+    ssh_private_key          = chomp(tls_private_key.ssh_key_pair.private_key_pem)
   }
 }
 
 resource "null_resource" "copy_gcs_key" {
-  count      = var.s3_boolean ? 0 : 1
+  count      = var.object_store_tool == "gcs" ? 1 : 0
   depends_on = [null_resource.run_pre_reqs]
   connection {
     type        = "ssh"
