@@ -1,5 +1,5 @@
 variable "auth_token" {
-  description = "This is your Packet API Auth token. This can also be specified with the TF_VAR_PACKET_AUTH_TOKEN shell environment variable."
+  description = "This is your Equinix Metal API Auth token"
   type        = string
 }
 
@@ -14,12 +14,12 @@ variable "project_name" {
 }
 
 variable "create_project" {
-  description = "if true create the packet project, if not skip and use the provided project"
+  description = "if true create the Equinix Metal project, if not skip and use the provided project"
   default     = true
 }
 
 variable "project_id" {
-  description = "Packet Project ID to use in case create_project is false"
+  description = "Equinix Metal Project ID to use in case create_project is false"
   default     = "null"
 }
 
