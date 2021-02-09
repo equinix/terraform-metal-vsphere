@@ -28,16 +28,37 @@ cd terraform-metal-vsphere
 
 Terraform uses modules to deploy infrastructure. In order to initialize the modules your simply run: `terraform init`. This should download five modules into a hidden directory `.terraform`
 
-## Setup an S3 compatible object store
+## Setup your object store
+We need an object store to download *closed source* packages such as *vCenter* and the *vSan SDK*.
+### S3 Compatible
+[Minio](http://minio.io) works great for this, which is an open source object store. Or you can use AWS S3.
 
-You need to use an S3 compatible object store in order to download *closed source* packages such as *vCenter* and the *vSan SDK*. [Minio](http://minio.io) works great for this, which is an open source object store is a workable option.
-
-You will need to layout the S3 structure to look like this:
-
+The following settings will be needed in your `terraform.tfvars` to use GCS
 ```console
-https://s3.example.com: 
+object_store_tool        = "s3"
+object_store_bucket_name = "bucket_name/folder"
+s3_url                   = "https://s3.example.com"
+s3_access_key            = "4fa85962-975f-4650-b603-17f1cb9dee10"
+s3_secret_key            = "becf3868-3f07-4dbb-a6d5-eacfd7512b09"
+s3_version               = "S3v4"
+```
+
+### Google Cloud Storage (GCS)
+We also have the optoin to use Google Cloud Storage (GCS). The setup will use a service account with Storage Reader permissions to download the needed files.
+
+The following settings will be needed in your `terraform.tfvars` to use GCS
+```console
+object_store_tool        = "gcs"
+object_store_bucket_name = "bucket_name/folder"
+relative_path_to_gcs_key = "storage-reader-key.json"
+```
+
+## Upload files to your Object Store
+You will need to layout the object store structure to look like this:
+```console
+Object Store Root: 
     | 
-    |__ vmware 
+    |__ Bucket_Name 
         | 
         |__ VMware-VCSA-all-6.7.0-14367737.iso
         | 
@@ -45,22 +66,24 @@ https://s3.example.com:
         | 
         |__ vsanmgmtObjects.py
 ```
+Your VMware ISO name may vary depending on which build you download.
 
 These files can be downloaded from [My VMware](http://my.vmware.com).
+
 Once logged in to "My VMware" the download links are as follows:
 
-* [VMware vCenter Server 6.7U3](https://my.vmware.com/group/vmware/details?downloadGroup=VC67U3B&productId=742&rPId=40665) - VVMware vCenter Server Appliance ISO
+* [VMware vCenter Server 6.7U3](https://my.vmware.com/group/vmware/details?downloadGroup=VC67U3B&productId=742&rPId=40665) - VMware vCenter Server Appliance ISO
 * [VMware vSAN Management SDK 6.7U3](https://my.vmware.com/group/vmware/details?downloadGroup=VSAN-MGMT-SDK67U3&productId=734) - Virtual SAN Management SDK for Python
 
-You will need to find the two individual Python files in the vSAN SDK zip file and place them in the S3 bucket as shown above.
+You will need to find the two individual Python files in the vSAN SDK zip file and place them in your object store bucket as shown above.
 
 ## Modify your variables
 
 There are many variables which can be set to customize your install within `vars.tf`. The default variables to bring up a 3 node vSphere cluster and linux router using Equinix Metal's [c3.medium.x86](https://metal.equinix.com/product/servers/). Change each default variable at your own risk.
 
-There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will need an S3 compatible object store to download "Closed Source" packages such as vCenter. You'll provide `s3_url`, `object_store_bucket_name`, `s3_access_key`, `s3_secret_key` as well as the vCenter ISO file name as `vcenter_iso_name`.
+There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will to setup you object store to download "Closed Source" packages such as vCenter. You'll provide the needed variables as descibed above as well as the vCenter ISO file name as `vcenter_iso_name`.
 
-Here is a quick command plus sample values to start file for you (make sure you adjust the variables to match your environment, pay special attention that the `vcenter_iso_name` matches whats in your bucket):
+Here is a quick command plus sample values (assuming an S3 object store) to start file for you (make sure you adjust the variables to match your environment, pay special attention that the `vcenter_iso_name` matches whats in your bucket):
 
 ```bash
 cat <<EOF >terraform.tfvars 
@@ -86,18 +109,21 @@ terraform apply --auto-approve
 This should end with output similar to this:
 
 ```console
-Apply complete! Resources: 50 added, 0 changed, 0 destroyed. 
- 
-Outputs: 
- 
-VPN_Endpoint = 139.178.85.49 
-VPN_PSK = @U69neoBD2vlGdHbe@o1 
-VPN_Pasword = 0!kfeooo?FaAvyZ2 
-VPN_User = vm_admin 
-vCenter_Appliance_Root_Password = n4$REf6p*oMo2eYr 
-vCenter_FQDN = vcva.metal.local 
-vCenter_Password = bzN4UE7m3g$DOf@P 
-vCenter_Username = Administrator@vsphere.local 
+Apply complete! Resources: 36 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+bastion_host = "147.75.47.205"
+ssh_key_path = "$HOME/.ssh/anthos-packet-project-1-g6oty-key"
+vcenter_fqdn = "vcva.metal.local"
+vcenter_ip = "139.178.83.226"
+vcenter_password = "4!wz2HbQ*CRtgS8A"
+vcenter_root_password = "9SKyaj5B@99O!3Le"
+vcenter_username = "Administrator@vsphere.local"
+vpn_endpoint = "147.75.47.205"
+vpn_pasword = "!f*NhVj0uSehmm0k"
+vpn_psk = "?j*ISFUae563Sq4I@P28"
+vpn_user = "vm_admin"
 ```
 
 ## Connect to the Environment
