@@ -33,7 +33,7 @@ We need an object store to download *closed source* packages such as *vCenter* a
 ### S3 Compatible
 [Minio](http://minio.io) works great for this, which is an open source object store. Or you can use AWS S3.
 
-The following settings will be needed in your `terraform.tfvars` to use GCS
+The following settings will be needed in your `terraform.tfvars` to use S3
 ```console
 object_store_tool        = "s3"
 object_store_bucket_name = "bucket_name/folder"
