@@ -57,7 +57,10 @@ def main():
     vss_spec.bridge = vim.host.VirtualSwitch.BondBridge(nicDevice=all_uplinks)
     vss_spec.policy.nicTeaming.nicOrder.activeNic = active_uplinks
     vss_spec.policy.nicTeaming.nicOrder.standbyNic = backup_uplinks
-    host_network_system.UpdateVirtualSwitch(vswitchName=options.vswitch, spec=vss_spec)
+    try:
+        host_network_system.UpdateVirtualSwitch(vswitchName=options.vswitch, spec=vss_spec)
+    except Exception:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
