@@ -180,7 +180,7 @@ variable "s3_version" {
 }
 
 variable "object_store_tool" {
-  description = "Wich tool should you use to download objects from the object store? ('mc' and 'gcs' have been tested.)"
+  description = "Which tool should you use to download objects from the object store? ('mc' and 'gcs' have been tested.)"
   default     = "mc"
 }
 
