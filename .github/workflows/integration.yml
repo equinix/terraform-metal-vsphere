@@ -23,6 +23,7 @@ jobs:
         - vmware_os: vmware_esxi_7_0
           vcenter_iso: VMware-VCSA-all-7.0.0-16189094.iso
     env:
+      SSH_AUTH_SOCK: ${{ runner.temp }}/ssh_agent.sock
       TF_IN_AUTOMATION: 1
       TF_VERSION: ${{ matrix.tf }}
       TF_VAR_control_plane_node_count: 0
@@ -53,9 +54,14 @@ jobs:
       id: init
       run: terraform init -input=false
     - id: project
-      uses: displague/metal-project-action@v0.5.0
+      uses: displague/metal-project-action@v0.6.0
       env:
         METAL_AUTH_TOKEN: ${{ secrets.METAL_AUTH_TOKEN }}
+    # Configure an SSH Agent with a key that can access the project
+    - name: SSH Agent
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add ${{ steps.project.outputs.projectSSHPrivateKeyFile }}
     - name: Terraform Vars - Cluster Name
       run:  echo "TF_VAR_vcenter_cluster_name=tfacc-${SHORT_SHA}" >> $GITHUB_ENV
     - name: Terraform Vars - Project ID
