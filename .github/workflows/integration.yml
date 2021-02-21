@@ -23,7 +23,7 @@ jobs:
         - vmware_os: vmware_esxi_7_0
           vcenter_iso: VMware-VCSA-all-7.0.0-16189094.iso
     env:
-      SSH_AUTH_SOCK: ${{ runner.temp }}/ssh_agent.sock
+      SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       TF_IN_AUTOMATION: 1
       TF_VERSION: ${{ matrix.tf }}
       TF_VAR_control_plane_node_count: 0
