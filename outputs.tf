@@ -13,7 +13,7 @@ output "vpn_user" {
   description = "L2TP VPN username"
 }
 
-output "vpn_pasword" {
+output "vpn_password" {
   value       = random_string.vpn_pass.result
   description = "L2TP VPN Password"
 }
