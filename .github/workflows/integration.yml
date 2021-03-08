@@ -54,7 +54,7 @@ jobs:
       id: init
       run: terraform init -input=false
     - id: project
-      uses: displague/metal-project-action@v0.6.0
+      uses: displague/metal-project-action@v0.9.0
       env:
         METAL_AUTH_TOKEN: ${{ secrets.METAL_AUTH_TOKEN }}
     # Configure an SSH Agent with a key that can access the project
