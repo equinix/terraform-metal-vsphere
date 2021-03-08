@@ -61,7 +61,7 @@ jobs:
     - name: SSH Agent
       run: |
         ssh-agent -a $SSH_AUTH_SOCK > /dev/null
-        ssh-add ${{ steps.project.outputs.projectSSHPrivateKeyFile }}
+        ssh-add $METAL_SSH_PRIVATE_KEY_FILE
     - name: Terraform Vars - Cluster Name
       run:  echo "TF_VAR_vcenter_cluster_name=tfacc-${SHORT_SHA}" >> $GITHUB_ENV
     - name: Terraform Vars - Project ID
