@@ -4,6 +4,7 @@ name: 'integration'
 # https://learn.hashicorp.com/tutorials/terraform/automate-terraform
 
 on:
+  workflow_dispatch:
   push:
     paths-ignore:
       - 'LICENSE'
