@@ -223,7 +223,10 @@ resource "null_resource" "copy_gcs_key" {
 }
 
 resource "null_resource" "download_vcenter_iso" {
-  depends_on = [null_resource.copy_gcs_key]
+  depends_on = [
+    null_resource.run_pre_reqs,
+    null_resource.copy_gcs_key,
+  ]
   connection {
     type        = "ssh"
     user        = local.ssh_user
@@ -274,7 +277,10 @@ data "template_file" "vpn_installer" {
 }
 
 resource "null_resource" "install_vpn_server" {
-  depends_on = [null_resource.download_vcenter_iso]
+  depends_on = [
+    null_resource.run_pre_reqs,
+    null_resource.download_vcenter_iso,
+  ]
   connection {
     type        = "ssh"
     user        = local.ssh_user
@@ -323,13 +329,16 @@ data "template_file" "vcva_template" {
 }
 
 resource "null_resource" "copy_vcva_template" {
-  depends_on = [null_resource.run_pre_reqs]
+  depends_on = [
+    null_resource.run_pre_reqs,
+  ]
   connection {
     type        = "ssh"
     user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
     host        = metal_device.router.access_public_ipv4
   }
+
   provisioner "file" {
     content     = data.template_file.vcva_template.rendered
     destination = "$HOME/bootstrap/vcva_template.json"
