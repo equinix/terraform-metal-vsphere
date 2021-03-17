@@ -39,7 +39,7 @@ jobs:
       # TODO only provide this to terraform steps that need it
       TF_VAR_auth_token: ${{ secrets.METAL_AUTH_TOKEN }}
       TF_VAR_s3_url: ${{ secrets.S3_URL }}
-      TF_VAR_s3_bucket_name: ${{ secrets.S3_BUCKET_NAME }}
+      TF_VAR_object_store_bucket_name: ${{ secrets.S3_BUCKET_NAME }}
       TF_VAR_s3_access_key: ${{ secrets.S3_ACCESS_KEY }}
       TF_VAR_s3_secret_key: ${{ secrets.S3_SECRET_KEY }}
     steps:
