@@ -14,6 +14,7 @@ jobs:
   integrate:
     name: Integration Tests
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -82,6 +83,8 @@ jobs:
     - name: Project Delete
       if: ${{ always() }}
       uses: displague/metal-sweeper-action@v0.3.0
+      with:
+        keepProject: 'false'
       env:
         METAL_PROJECT_ID: ${{ steps.project.outputs.projectID }}
         METAL_AUTH_TOKEN: ${{ secrets.METAL_AUTH_TOKEN }}
