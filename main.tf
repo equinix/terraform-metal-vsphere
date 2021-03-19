@@ -430,11 +430,12 @@ data "template_file" "deploy_vcva_script" {
 data "template_file" "claim_vsan_disks" {
   template = file("${path.module}/templates/vsan_claim.py")
   vars = {
-    vcenter_fqdn   = format("vcva.%s", var.domain_name)
-    vcenter_user   = var.vcenter_user_name
-    vcenter_domain = var.vcenter_domain
-    vcenter_pass   = random_string.sso_password.result
-    plan_type      = var.esxi_size
+    vcenter_fqdn         = format("vcva.%s", var.domain_name)
+    vcenter_user         = var.vcenter_user_name
+    vcenter_domain       = var.vcenter_domain
+    vcenter_pass         = random_string.sso_password.result
+    vcenter_cluster_name = var.vcenter_cluster_name
+    plan_type            = var.esxi_size
   }
 }
 
