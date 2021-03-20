@@ -39,7 +39,7 @@ jobs:
       # TODO only provide this to terraform steps that need it
       TF_VAR_auth_token: ${{ secrets.METAL_AUTH_TOKEN }}
       TF_VAR_s3_url: ${{ secrets.S3_URL }}
-      TF_VAR_s3_bucket_name: ${{ secrets.S3_BUCKET_NAME }}
+      TF_VAR_object_store_bucket_name: ${{ secrets.S3_BUCKET_NAME }}
       TF_VAR_s3_access_key: ${{ secrets.S3_ACCESS_KEY }}
       TF_VAR_s3_secret_key: ${{ secrets.S3_SECRET_KEY }}
     steps:
@@ -70,11 +70,11 @@ jobs:
       run: echo "TF_VAR_project_id=${{ steps.project.outputs.projectID }}" >> $GITHUB_ENV
     - name: Terraform Plan
       id: plan
-      timeout-minutes: 45
+      timeout-minutes: 120
       run: terraform plan -out=tfplan -input=false
     - name: Terraform Apply
       id: apply
-      timeout-minutes: 45
+      timeout-minutes: 120
       run: terraform apply -input=false tfplan
     - name: Terraform Destroy
       id: destroy
