@@ -70,11 +70,11 @@ jobs:
       run: echo "TF_VAR_project_id=${{ steps.project.outputs.projectID }}" >> $GITHUB_ENV
     - name: Terraform Plan
       id: plan
-      timeout-minutes: 45
+      timeout-minutes: 120
       run: terraform plan -out=tfplan -input=false
     - name: Terraform Apply
       id: apply
-      timeout-minutes: 45
+      timeout-minutes: 120
       run: terraform apply -input=false tfplan
     - name: Terraform Destroy
       id: destroy
