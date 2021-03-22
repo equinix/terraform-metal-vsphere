@@ -32,9 +32,9 @@ jobs:
       TF_VAR_vcenter_iso_name: ${{ matrix.vsphere.vcenter_iso }}
       TF_VAR_vmware_os: ${{ matrix.vsphere.vmware_os }}
       TF_VAR_esxi_host_count: 1
-      TF_VAR_esxi_size: "c3.medium.x86"
-      TF_VAR_router_size: "c2.medium.x86"
-      TF_VAR_facility: "dfw2"
+      TF_VAR_esxi_size: "t3.xsmall.x86"
+      TF_VAR_router_size: "t3.xsmall.x86"
+      TF_VAR_facility: "sjc1"
       TF_VAR_create_project : false
       # TODO only provide this to terraform steps that need it
       TF_VAR_auth_token: ${{ secrets.METAL_AUTH_TOKEN }}
