@@ -489,7 +489,7 @@ service fail2ban restart 2>/dev/null
 service ipsec restart 2>/dev/null
 service xl2tpd restart 2>/dev/null
 
-cat <<EOF
+cat > /root/vpn-creds.txt <<EOF
 
 ================================================
 

@@ -5,6 +5,7 @@ output "vpn_endpoint" {
 
 output "vpn_psk" {
   value       = random_string.ipsec_psk.result
+  sensitive   = true
   description = "L2TP VPN Pre-Shared Key"
 }
 
@@ -15,6 +16,7 @@ output "vpn_user" {
 
 output "vpn_password" {
   value       = random_string.vpn_pass.result
+  sensitive   = true
   description = "L2TP VPN Password"
 }
 
@@ -30,11 +32,13 @@ output "vcenter_username" {
 
 output "vcenter_password" {
   value       = random_string.sso_password.result
+  sensitive   = true
   description = "The SSO Password to login to vCenter"
 }
 
 output "vcenter_root_password" {
   value       = random_string.vcenter_password.result
+  sensitive   = true
   description = "The root password to ssh or login at the console of vCanter."
 }
 
