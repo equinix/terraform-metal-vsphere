@@ -30,7 +30,7 @@ cd terraform-metal-vsphere
 
 ## Initialize Terraform
 
-Terraform uses modules to deploy infrastructure. In order to initialize the modules your simply run: `terraform init`. This should download five modules into a hidden directory `.terraform`
+Terraform uses modules to deploy infrastructure. In order to initialize the modules your simply run: `terraform init -upgrade`. This should download five modules into a hidden directory `.terraform`
 
 ## Setup your object store
 We need an object store to download *closed source* packages such as *vCenter* and the *vSan SDK*.
