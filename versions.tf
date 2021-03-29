@@ -5,6 +5,7 @@ terraform {
     }
     metal = {
       source = "equinix/metal"
+      version = "~> 1.1"
     }
     random = {
       source = "hashicorp/random"
@@ -19,5 +20,5 @@ terraform {
       source = "hashicorp/local"
     }
   }
-  required_version = ">= 0.13"
+  required_version = ">= 0.14"
 }

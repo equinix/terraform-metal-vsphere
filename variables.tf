@@ -1,5 +1,6 @@
 variable "auth_token" {
   description = "This is your Equinix Metal API Auth token"
+  sensitive   = true
   type        = string
 }
 
@@ -166,11 +167,13 @@ variable "s3_url" {
 
 variable "s3_access_key" {
   description = "This is the access key for your S3 endpoint"
+  sensitive   = true
   default     = "S3_ACCESS_KEY"
 }
 
 variable "s3_secret_key" {
   description = "This is the secret key for your S3 endpoint"
+  sensitive   = true
   default     = "S3_SECRET_KEY"
 }
 

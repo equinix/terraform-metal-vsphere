@@ -18,10 +18,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        tf: [0.13.2]
+        tf: [0.14.8]
         vsphere:
-        - vmware_os: vmware_esxi_6_7
-          vcenter_iso: VMware-VCSA-all-6.7.0-14367737.iso
+        #- vmware_os: vmware_esxi_6_7
+        #  vcenter_iso: VMware-VCSA-all-6.7.0-14367737.iso
         - vmware_os: vmware_esxi_7_0
           vcenter_iso: VMware-VCSA-all-7.0.0-16189094.iso
     env:
@@ -31,10 +31,10 @@ jobs:
       TF_VAR_control_plane_node_count: 0
       TF_VAR_vcenter_iso_name: ${{ matrix.vsphere.vcenter_iso }}
       TF_VAR_vmware_os: ${{ matrix.vsphere.vmware_os }}
-      TF_VAR_esxi_host_count: 1
+      TF_VAR_esxi_host_count: 2
       TF_VAR_esxi_size: "c3.medium.x86"
       TF_VAR_router_size: "c2.medium.x86"
-      TF_VAR_facility: "dfw2"
+      TF_VAR_facility: "sjc1"
       TF_VAR_create_project : false
       # TODO only provide this to terraform steps that need it
       TF_VAR_auth_token: ${{ secrets.METAL_AUTH_TOKEN }}
