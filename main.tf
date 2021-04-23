@@ -452,7 +452,7 @@ resource "null_resource" "deploy_vcva" {
   }
 
   provisioner "file" {
-    source      = "templates/extend_datastore.sh"
+    source      = "${path.module}/templates/extend_datastore.sh"
     destination = "$HOME/bootstrap/extend_datastore.sh"
   }
 
