@@ -12,7 +12,7 @@ locals {
   ssh_user               = "root"
   project_name_sanitized = replace(var.project_name, "/[ ]/", "_")
   ssh_key_name           = format("%s-%s-key", local.project_name_sanitized, random_string.ssh_unique.result)
-  gcs_key_path           = coalesce(abspath(var.path_to_gcs_key), fileset(path.module, var.relative_path_to_gcs_key)[0], fileset(path.cwd, var.gcs_key_name)[0])
+  gcs_key_path           = coalesce(abspath(var.path_to_gcs_key), fileset(path.module, var.relative_path_to_gcs_key), fileset(path.cwd, var.gcs_key_name))
 }
 
 resource "metal_project" "new_project" {
