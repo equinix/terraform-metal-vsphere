@@ -1,7 +1,7 @@
 import optparse
 import sys
 from time import sleep
-from pyVmomi import vim, vmodl
+from pyVmomi import vim
 from pyVim import connect
 
 

@@ -4,7 +4,7 @@ import packet as metal
 import optparse
 import sys
 from time import sleep
-from pyVmomi import vim, vmodl
+from pyVmomi import vim
 from pyVim import connect
 from subprocess import Popen
 
@@ -133,7 +133,7 @@ def enable_service_on_virtual_nic(host, virtual_nic, service_type):
         vsan_config = vim.vsan.host.ConfigInfo(networkInfo=net_info)
         vsan_system = host.configManager.vsanSystem
         try:
-            vsan_task = vsan_system.UpdateVsan_Task(vsan_config)
+            vsan_system.UpdateVsan_Task(vsan_config)
         except Exception as e:
             print("Failed to set service type to vsan: {}".format(str(e)))
     else:
@@ -203,7 +203,7 @@ def prepare_parser():
     return parser
 
 
-def main(): # noqa: C901
+def main():  # noqa: C901
     parser = prepare_parser()
     options, _ = parser.parse_args()
     if not (

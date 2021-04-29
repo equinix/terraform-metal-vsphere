@@ -1,13 +1,6 @@
-import json
-import ipaddress
-import os
-import sys
-import subprocess
-import socket
-from pyVmomi import vim, vmodl
+from pyVmomi import vim
 from pyVim import connect
 import vsanapiutils
-from operator import itemgetter, attrgetter
 import requests
 import ssl
 
@@ -41,7 +34,7 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
     pc = content.propertyCollector
     propSet = [vim.PropertySpec(type=objects[0].__class__, pathSet=parameters)]
 
-    while result == None and len(objects) > 0:
+    while result is None and len(objects) > 0:
         try:
             objectSet = []
             for obj in objects:
@@ -130,5 +123,5 @@ for host, disks in diskmap.items():
         )
         task = vsanVcDiskManagementSystem.InitializeDiskMappings(dm)
         tasks.append(task)
-    except expression as identifier:
+    except:  # noqa: E722
         print("Some vSan Claim error... Check vSan...")
