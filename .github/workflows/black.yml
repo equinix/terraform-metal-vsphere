@@ -1,0 +1,25 @@
+name: Python package
+
+on:
+- push
+- pull_request
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version:
+        - 3.6 # Match the version on the gateway node
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - id: fmt_and_lint
+      run: |
+        pip install black==21.4b2 pylama
+        black --check --diff .
+        pylama
