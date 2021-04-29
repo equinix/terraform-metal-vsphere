@@ -86,7 +86,7 @@ variable "router_hostname" {
 
 variable "esxi_hostname" {
   description = "This is the hostname prefix for your esxi hosts. A number will be added to the end."
-  default        = "esx"
+  default     = "esx"
 }
 
 variable "router_size" {

@@ -86,17 +86,17 @@ resource "metal_device" "router" {
 }
 
 resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
-  count      = length(metal_vlan.private_vlans)
-  device_id  = metal_device.router.id
-  port_name  = "bond0"
-  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
+  count     = length(metal_vlan.private_vlans)
+  device_id = metal_device.router.id
+  port_name = "bond0"
+  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
 }
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
-  count      = length(metal_vlan.public_vlans)
-  device_id  = metal_device.router.id
-  port_name  = "bond0"
-  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
+  count     = length(metal_vlan.public_vlans)
+  device_id = metal_device.router.id
+  port_name = "bond0"
+  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
 }
 
 resource "metal_ip_attachment" "block_assignment" {
