@@ -3,3 +3,5 @@
 /override.tf
 /terraform.tfvars
 terraform.tfstate*
+.ropeproject/*
+.tox/*
