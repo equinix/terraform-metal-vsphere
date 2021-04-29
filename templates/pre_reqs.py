@@ -62,16 +62,10 @@ for i in range(0, len(public_vlans)):
 readFile = open("/etc/network/interfaces")
 lines = readFile.readlines()
 readFile.close()
-for line in reversed(lines):
-    if "auto" in line:
-        split_line = line.split()
-        interface = split_line[-1]
-        break
-lines = lines[:-5]
+interface = "bond0"
 
-# Ensure 8021q and remove the second interface from the bond
+# Ensure 8021q is loaded
 os.system("modprobe 8021q")
-os.system("ifdown {}".format(interface))
 
 # Make sure 8021q is loaded at startup
 modules_file = open("/etc/modules-load.d/modules.conf", "a+")
@@ -95,11 +89,6 @@ interface_file = open('/etc/network/interfaces', 'w')
 for line in lines:
     interface_file.write(line)
 
-# Add new conf for second physical interface
-interface_file.write("\nauto {}\n".format(interface))
-interface_file.write("iface {} inet manual\n".format(interface))
-interface_file.write("\tmtu 9000\n")
-
 # Open dnsmasq config for writing
 dnsmasq_conf = open('/etc/dnsmasq.d/dhcp.conf', 'w')
 
@@ -117,11 +106,11 @@ for subnet in subnets:
         router_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
         low_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
         if 'reserved_ip_count' in subnet:
-          high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-subnet['reserved_ip_count']].compressed
+            high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-subnet['reserved_ip_count']].compressed
         else:
-          high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-1].compressed
+            high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-1].compressed
         netmask = ipaddress.ip_network(subnet['cidr']).netmask.compressed
-        
+
         # Setup vLan interface for this subnet
         interface_file.write("\nauto {}.{}\n".format(interface, subnet['vlan']))
         interface_file.write("iface {}.{} inet static\n".format(interface, subnet['vlan']))

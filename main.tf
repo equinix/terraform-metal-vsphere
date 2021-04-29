@@ -89,29 +89,21 @@ resource "metal_device" "router" {
   project_id       = local.project_id
 }
 
-resource "metal_device_network_type" "router" {
-  device_id = metal_device.router.id
-  type      = "hybrid"
-}
-
 resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
-  depends_on = [metal_device_network_type.router]
-  count      = length(metal_vlan.private_vlans)
-  device_id  = metal_device.router.id
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
+  count     = length(metal_vlan.private_vlans)
+  device_id = metal_device.router.id
+  port_name = "bond0"
+  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
 }
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
-  depends_on = [metal_device_network_type.router]
-  count      = length(metal_vlan.public_vlans)
-  device_id  = metal_device.router.id
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
+  count     = length(metal_vlan.public_vlans)
+  device_id = metal_device.router.id
+  port_name = "bond0"
+  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
 }
 
 resource "metal_ip_attachment" "block_assignment" {
-  depends_on    = [metal_device_network_type.router]
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
