@@ -6,13 +6,13 @@ import urllib.request as urllib2
 import random
 
 # Vars from Terraform
-private_subnets = '${private_subnets}'
-private_vlans = '${private_vlans}'
-public_subnets = '${public_subnets}'
-public_vlans = '${public_vlans}'
-public_cidrs = '${public_cidrs}'
-domain_name = '${domain_name}'
-vcenter_network = '${vcenter_network}'
+private_subnets = "${private_subnets}"
+private_vlans = "${private_vlans}"
+public_subnets = "${public_subnets}"
+public_vlans = "${public_vlans}"
+public_cidrs = "${public_cidrs}"
+domain_name = "${domain_name}"
+vcenter_network = "${vcenter_network}"
 
 
 def words_list():
@@ -30,18 +30,28 @@ def words_list():
 words = words_list()
 
 # Allow
-os.system("echo 'iptables-persistent iptables-persistent/autosave_v4 boolean true' | sudo debconf-set-selections")
-os.system("echo 'iptables-persistent iptables-persistent/autosave_v6 boolean true' | sudo debconf-set-selections")
+os.system(
+    "echo 'iptables-persistent iptables-persistent/autosave_v4 boolean true' | sudo debconf-set-selections"
+)
+os.system(
+    "echo 'iptables-persistent iptables-persistent/autosave_v6 boolean true' | sudo debconf-set-selections"
+)
 
 # Disable systemd-resolved
 os.system("systemctl stop systemd-resolved")
 os.system("systemctl disable systemd-resolved")
 
 # Install Apt Packages
-os.system("echo 'deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main' > /etc/apt/sources.list.d/google-cloud-sdk.list")
-os.system("curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -")
-os.system('DEBIAN_FRONTEND=noninteractive apt-get update -y')
-os.system('DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip expect unzip google-cloud-sdk')
+os.system(
+    "echo 'deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main' > /etc/apt/sources.list.d/google-cloud-sdk.list"
+)
+os.system(
+    "curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -"
+)
+os.system("DEBIAN_FRONTEND=noninteractive apt-get update -y")
+os.system(
+    'DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip expect unzip google-cloud-sdk'
+)
 
 # Build single subnet map with all vlans, cidrs, etc...
 subnets = json.loads(private_subnets)
@@ -51,11 +61,11 @@ public_vlans = json.loads(public_vlans)
 public_cidrs = json.loads(public_cidrs)
 
 for i in range(0, len(private_vlans)):
-    subnets[i]['vlan'] = private_vlans[i]
+    subnets[i]["vlan"] = private_vlans[i]
 
 for i in range(0, len(public_vlans)):
-    public_subnets[i]['vlan'] = public_vlans[i]
-    public_subnets[i]['cidr'] = public_cidrs[i]
+    public_subnets[i]["vlan"] = public_vlans[i]
+    public_subnets[i]["cidr"] = public_cidrs[i]
     subnets.append(public_subnets[i])
 
 # Wipe second Network Interface from config file
@@ -85,35 +95,43 @@ sysctl_file.close()
 os.system("sysctl -p")
 
 # Remove old conf for second interface
-interface_file = open('/etc/network/interfaces', 'w')
+interface_file = open("/etc/network/interfaces", "w")
 for line in lines:
     interface_file.write(line)
 
 # Open dnsmasq config for writing
-dnsmasq_conf = open('/etc/dnsmasq.d/dhcp.conf', 'w')
+dnsmasq_conf = open("/etc/dnsmasq.d/dhcp.conf", "w")
 
 # Loop though all subnets and setup Interfaces, DNSMasq, & IPTables
 for subnet in subnets:
-    if subnet['name'] == vcenter_network:
-        vcenter_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
-    if subnet['routable']:
+    if subnet["name"] == vcenter_network:
+        vcenter_ip = list(ipaddress.ip_network(subnet["cidr"]).hosts())[1].compressed
+    if subnet["routable"]:
         # Find vCenter IP
-        if subnet['vsphere_service_type'] == 'management':
-            management_gateway = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
-            sed_cmd = "sed -i '1i nameserver " + management_gateway + "' /etc/resolv.conf"
+        if subnet["vsphere_service_type"] == "management":
+            management_gateway = list(ipaddress.ip_network(subnet["cidr"]).hosts())[
+                0
+            ].compressed
+            sed_cmd = (
+                "sed -i '1i nameserver " + management_gateway + "' /etc/resolv.conf"
+            )
             os.system(sed_cmd)
         # Gather network facts about this subnet
-        router_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[0].compressed
-        low_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[1].compressed
-        if 'reserved_ip_count' in subnet:
-            high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-subnet['reserved_ip_count']].compressed
+        router_ip = list(ipaddress.ip_network(subnet["cidr"]).hosts())[0].compressed
+        low_ip = list(ipaddress.ip_network(subnet["cidr"]).hosts())[1].compressed
+        if "reserved_ip_count" in subnet:
+            high_ip = list(ipaddress.ip_network(subnet["cidr"]).hosts())[
+                -subnet["reserved_ip_count"]
+            ].compressed
         else:
-            high_ip = list(ipaddress.ip_network(subnet['cidr']).hosts())[-1].compressed
-        netmask = ipaddress.ip_network(subnet['cidr']).netmask.compressed
+            high_ip = list(ipaddress.ip_network(subnet["cidr"]).hosts())[-1].compressed
+        netmask = ipaddress.ip_network(subnet["cidr"]).netmask.compressed
 
         # Setup vLan interface for this subnet
-        interface_file.write("\nauto {}.{}\n".format(interface, subnet['vlan']))
-        interface_file.write("iface {}.{} inet static\n".format(interface, subnet['vlan']))
+        interface_file.write("\nauto {}.{}\n".format(interface, subnet["vlan"]))
+        interface_file.write(
+            "iface {}.{} inet static\n".format(interface, subnet["vlan"])
+        )
         interface_file.write("\taddress {}\n".format(router_ip))
         interface_file.write("\tnetmask {}\n".format(netmask))
         interface_file.write("\tvlan-raw-device {}\n".format(interface))
@@ -125,27 +143,35 @@ for subnet in subnets:
 
         # Write dnsmasq dhcp scopes
         dnsmasq_conf.write("dhcp-range=set:{},{},{},2h\n".format(word, low_ip, high_ip))
-        dnsmasq_conf.write("dhcp-option=tag:{},option:router,{}\n".format(word, router_ip))
+        dnsmasq_conf.write(
+            "dhcp-option=tag:{},option:router,{}\n".format(word, router_ip)
+        )
 
         # Create NAT rule for this network if the network is tagged as NAT
-        if subnet['nat']:
-            os.system("iptables -t nat -A POSTROUTING -o bond0 -j MASQUERADE -s {}".format(subnet['cidr']))
+        if subnet["nat"]:
+            os.system(
+                "iptables -t nat -A POSTROUTING -o bond0 -j MASQUERADE -s {}".format(
+                    subnet["cidr"]
+                )
+            )
 
 interface_file.close()
 
 # Reserver the vCenter IP
-dnsmasq_conf.write("\ndhcp-host=00:00:00:00:00:99, {} # vCenter IP\n".format(vcenter_ip))
+dnsmasq_conf.write(
+    "\ndhcp-host=00:00:00:00:00:99, {} # vCenter IP\n".format(vcenter_ip)
+)
 
 dnsmasq_conf.close()
 
 # DNS record for vCenter
-etc_hosts = open('/etc/hosts', 'a+')
-etc_hosts.write('\n{}\tvcva\tvcva.{}\n'.format(vcenter_ip, domain_name))
+etc_hosts = open("/etc/hosts", "a+")
+etc_hosts.write("\n{}\tvcva\tvcva.{}\n".format(vcenter_ip, domain_name))
 etc_hosts.close()
 
 # Add domain to host
-resolv_conf = open('/etc/resolv.conf', 'a+')
-resolv_conf.write('\ndomain {}\nsearch {}\n'.format(domain_name, domain_name))
+resolv_conf = open("/etc/resolv.conf", "a+")
+resolv_conf.write("\ndomain {}\nsearch {}\n".format(domain_name, domain_name))
 resolv_conf.close()
 
 # Block DNSMasq out the WAN
