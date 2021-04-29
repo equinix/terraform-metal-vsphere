@@ -4,7 +4,7 @@ terraform {
       source = "hashicorp/null"
     }
     metal = {
-      source = "equinix/metal"
+      source  = "equinix/metal"
       version = "~> 1.1"
     }
     random = {

@@ -7,16 +7,15 @@ from time import sleep
 from pyVmomi import vim
 from pyVim import connect
 from subprocess import Popen
-
-
-# Vars from Terraform
-private_subnets = """${private_subnets}"""
-private_vlans = "${private_vlans}"
-public_subnets = """${public_subnets}"""
-public_vlans = "${public_vlans}"
-public_cidrs = """${public_cidrs}"""
-domain_name = "${domain_name}"
-metal_token = "${metal_token}"
+from vars import (
+    private_subnets,
+    private_vlans,
+    public_subnets,
+    public_vlans,
+    public_cidrs,
+    domain_name,
+    metal_token,
+)
 
 # Constants
 vswitch_name = "vSwitch1"

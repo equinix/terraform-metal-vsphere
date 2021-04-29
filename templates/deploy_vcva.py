@@ -7,6 +7,19 @@ import socket
 from time import sleep
 from pyVmomi import vim
 from pyVim import connect
+from vars import (
+    private_subnets,
+    public_subnets,
+    public_cidrs,
+    esx_passwords,
+    vcenter_user,
+    vcenter_domain,
+    sso_password,
+    dc_name,
+    cluster_name,
+    vcenter_network,
+    domain_name,
+)
 
 
 def get_ssl_thumbprint(host_ip):
@@ -29,18 +42,6 @@ def get_ssl_thumbprint(host_ip):
     ssl_thumbprint = out.split(b"=")[-1].strip()
     return ssl_thumbprint.decode("utf-8")
 
-
-# Vars from Terraform
-private_subnets = """${private_subnets}"""
-public_subnets = """${public_subnets}"""
-public_cidrs = """${public_cidrs}"""
-esx_passwords = """${esx_passwords}"""
-vcenter_username = "${vcenter_user}@${vcenter_domain}"
-sso_password = """${sso_password}"""
-dc_name = "${dc_name}"
-cluster_name = "${cluster_name}"
-vcenter_network = "${vcenter_network}"
-domain_name = "${domain_name}"
 
 # Parse TF Vars
 subnets = json.loads(private_subnets)

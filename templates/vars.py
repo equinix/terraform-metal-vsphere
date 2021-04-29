@@ -1,0 +1,22 @@
+#!/usr/bin/python3
+
+# Vars from Terraform in """ so single quotes from Terraform vars don't escape
+private_subnets = """${private_subnets}"""
+private_vlans = """${private_vlans}"""
+public_subnets = """${public_subnets}"""
+public_vlans = """${public_vlans}"""
+public_cidrs = """${public_cidrs}"""
+domain_name = """${domain_name}"""
+vcenter_network = """${vcenter_network}"""
+vcenter_fqdn = """${vcenter_fqdn}"""
+vcenter_user = """${vcenter_user}"""
+vcenter_domain = """${vcenter_domain}"""
+vcenter_pass = """${vcenter_pass}"""
+vcenter_cluster_name = """${vcenter_cluster_name}"""
+metal_token = """${metal_token}"""
+esx_passwords = """${esx_passwords}"""
+vcenter_username = """${vcenter_user}@${vcenter_domain}"""
+sso_password = """${sso_password}"""
+dc_name = """${dc_name}"""
+cluster_name = """${cluster_name}"""
+plan_type = """${plan_type}"""
