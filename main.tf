@@ -11,7 +11,11 @@ resource "random_string" "ssh_unique" {
 locals {
   ssh_user               = "root"
   project_name_sanitized = replace(var.project_name, "/[ ]/", "_")
-  ssh_key_name           = format("%s-%s-key", local.project_name_sanitized, random_string.ssh_unique.result)
+
+  ssh_key_name = format("%s-%s-key", local.project_name_sanitized, random_string.ssh_unique.result)
+
+  gcs_keys_cwd = flatten([[fileset(path.cwd, var.gcs_key_name)], ""])
+  gcs_key_path = coalesce(abspath(var.path_to_gcs_key), path.module, var.relative_path_to_gcs_key, local.gcs_keys_cwd[0])
 }
 
 resource "metal_project" "new_project" {
@@ -217,7 +221,7 @@ resource "null_resource" "copy_gcs_key" {
     host        = metal_device.router.access_public_ipv4
   }
   provisioner "file" {
-    content     = file("${path.module}/${var.relative_path_to_gcs_key}")
+    content     = file(local.gcs_key_path)
     destination = "$HOME/bootstrap/gcp_storage_reader.json"
   }
 }
@@ -452,7 +456,7 @@ resource "null_resource" "deploy_vcva" {
   }
 
   provisioner "file" {
-    source      = "templates/extend_datastore.sh"
+    source      = "${path.module}/templates/extend_datastore.sh"
     destination = "$HOME/bootstrap/extend_datastore.sh"
   }
 

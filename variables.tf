@@ -192,9 +192,19 @@ variable "object_store_bucket_name" {
   default     = "vmware"
 }
 
-variable "relative_path_to_gcs_key" {
-  description = "If you are using GCS to download you vCenter ISO this is the path to the GCS key"
+variable "gcs_key_name" {
+  description = "If you are using GCS to download your vCenter ISO this is the name of the GCS key"
   default     = "storage-reader-key.json"
+}
+
+variable "path_to_gcs_key" {
+  description = "If you are using GCS to download your vCenter ISO this is the absolute path to the GCS key (ex: /home/example/storage-reader-key.json)"
+  default     = ""
+}
+
+variable "relative_path_to_gcs_key" {
+  description = "(Deprecated: use path_to_gcs_key) If you are using GCS to download your vCenter ISO this is the path to the GCS key"
+  default     = ""
 }
 
 variable "vcenter_iso_name" {
