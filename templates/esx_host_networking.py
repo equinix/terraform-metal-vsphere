@@ -168,7 +168,7 @@ def connect_to_host(esx_host, esx_user, esx_pass):
     return host, si
 
 
-def main():
+def prepare_parser():
     parser = optparse.OptionParser(
         usage="%prog --host <host_ip> --user <username> --pass <password> "
         "--id <device_id> --index <terraform_index> --ipRes <ip_reservation>"
@@ -200,7 +200,11 @@ def main():
     parser.add_option(
         "--ipRes", dest="ipRes", action="store", help="IP reservation for /29 ip block"
     )
+    return parser
 
+
+def main(): # noqa: C901
+    parser = prepare_parser()
     options, _ = parser.parse_args()
     if not (
         options.host
