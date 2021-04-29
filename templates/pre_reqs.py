@@ -152,7 +152,7 @@ for subnet in subnets:
 
 interface_file.close()
 
-# Reserver the vCenter IP
+# Reserve the vCenter IP
 dnsmasq_conf.write(
     "\ndhcp-host=00:00:00:00:00:99, {} # vCenter IP\n".format(vcenter_ip)
 )
