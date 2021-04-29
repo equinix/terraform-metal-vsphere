@@ -191,6 +191,11 @@ resource "null_resource" "run_pre_reqs" {
   }
 
   provisioner "file" {
+    content     = data.template_file.vars.rendered
+    destination = "$HOME/bootstrap/vars.py"
+  }
+
+  provisioner "file" {
     content     = file("${path.module}/templates/pre_reqs.py")
     destination = "$HOME/bootstrap/pre_reqs.py"
   }
