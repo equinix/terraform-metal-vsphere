@@ -54,27 +54,31 @@ resource "local_file" "project_private_key_pem" {
 resource "metal_reserved_ip_block" "ip_blocks" {
   count      = length(var.public_subnets)
   project_id = local.project_id
-  facility   = var.facility
+  facility   = var.facility == "" ? null : var.facility
+  metro      = var.metro == "" ? null : var.metro
   quantity   = element(var.public_subnets.*.ip_count, count.index)
 }
 
 resource "metal_reserved_ip_block" "esx_ip_blocks" {
   count      = var.esxi_host_count
   project_id = local.project_id
-  facility   = var.facility
+  facility   = var.facility == "" ? null : var.facility
+  metro      = var.metro == "" ? null : var.metro
   quantity   = 8
 }
 
 resource "metal_vlan" "private_vlans" {
   count       = length(var.private_subnets)
-  facility    = var.facility
+  facility    = var.facility == "" ? null : var.facility
+  metro       = var.metro == "" ? null : var.metro
   project_id  = local.project_id
   description = jsonencode(element(var.private_subnets.*.name, count.index))
 }
 
 resource "metal_vlan" "public_vlans" {
   count       = length(var.public_subnets)
-  facility    = var.facility
+  facility    = var.facility == "" ? null : var.facility
+  metro       = var.metro == "" ? null : var.metro
   project_id  = local.project_id
   description = jsonencode(element(var.public_subnets.*.name, count.index))
 }
@@ -83,7 +87,8 @@ resource "metal_device" "router" {
   depends_on       = [metal_ssh_key.ssh_pub_key]
   hostname         = var.router_hostname
   plan             = var.router_size
-  facilities       = [var.facility]
+  facilities       = var.facility == "" ? null : [var.facility]
+  metro            = var.metro == "" ? null : var.metro
   operating_system = var.router_os
   billing_cycle    = var.billing_cycle
   project_id       = local.project_id
@@ -114,7 +119,8 @@ resource "metal_device" "esxi_hosts" {
   count            = var.esxi_host_count
   hostname         = format("%s%02d", var.esxi_hostname, count.index + 1)
   plan             = var.esxi_size
-  facilities       = [var.facility]
+  facilities       = var.facility == "" ? null : [var.facility]
+  metro            = var.metro == "" ? null : var.metro
   operating_system = var.vmware_os
   billing_cycle    = var.billing_cycle
   project_id       = local.project_id
