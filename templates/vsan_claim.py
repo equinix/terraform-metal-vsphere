@@ -63,7 +63,7 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
 # Terraform Vars
 vcenter_fqdn = "${vcenter_fqdn}"
 vcenter_user = "${vcenter_user}@${vcenter_domain}"
-vcenter_pass = "${vcenter_pass}"
+vcenter_pass = """${vcenter_pass}"""
 vcenter_cluster_name = "${vcenter_cluster_name}"
 metal_server_plan = "${plan_type}"
 if metal_server_plan[0].lower() == "s":
