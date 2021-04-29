@@ -193,7 +193,7 @@ def main():
                 if pnic == online_pnics[n].key:
                     del online_pnics[n]
                     break
-    
+
     if len(online_pnics) <= 0:
         print("No additional uplink is active! Please email support@equinixmetal.com and tell them you think this server has a bad NIC!")
         sys.exit(1)
@@ -218,7 +218,7 @@ def main():
 
                 # Reserve IP in dnsmasq
                 dnsmasq_conf = open('/etc/dnsmasq.d/dhcp.conf', 'a+')
-                dnsmasq_conf.write("dhcp-host=00:00:00:00:00:0{}, {} # {} IP\n".format(int(options.index),
+                dnsmasq_conf.write("dhcp-host=00:00:00:00:00:{:02x}, {} # {} IP\n".format(int(options.index),
                                                                                        ip_address,
                                                                                        host_name))
                 dnsmasq_conf.close()
