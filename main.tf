@@ -167,7 +167,6 @@ data "template_file" "vars" {
     vcenter_fqdn         = format("vcva.%s", var.domain_name)
     vcenter_user         = var.vcenter_user_name
     vcenter_domain       = var.vcenter_domain
-    vcenter_password     = random_password.vcenter_password.result
     sso_password         = random_password.sso_password.result
     vcenter_cluster_name = var.vcenter_cluster_name
     plan_type            = var.esxi_size

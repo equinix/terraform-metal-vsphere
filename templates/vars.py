@@ -20,3 +20,5 @@ vcenter_username = """${vcenter_user}@${vcenter_domain}"""
 sso_password = """${sso_password}"""
 dc_name = """${dc_name}"""
 plan_type = """${plan_type}"""
+
+# vcenter_password is not used
