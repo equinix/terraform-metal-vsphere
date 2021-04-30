@@ -170,7 +170,6 @@ data "template_file" "vars" {
     vcenter_password     = random_string.vcenter_password.result
     sso_password         = random_string.sso_password.result
     vcenter_cluster_name = var.vcenter_cluster_name
-    cluster_name         = var.vcenter_cluster_name
     plan_type            = var.esxi_size
     esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password)
     dc_name              = var.vcenter_datacenter_name

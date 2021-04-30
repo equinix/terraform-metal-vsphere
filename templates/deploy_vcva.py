@@ -15,7 +15,7 @@ from vars import (
     vcenter_username,
     sso_password,
     dc_name,
-    cluster_name,
+    vcenter_cluster_name,
     vcenter_network,
     domain_name,
 )
@@ -146,7 +146,7 @@ if len(esx) > 1:
 
 # Create the cluster
 host_folder = dc.hostFolder
-cluster = host_folder.CreateClusterEx(name=cluster_name, spec=cluster_config)
+cluster = host_folder.CreateClusterEx(name=vcenter_cluster_name, spec=cluster_config)
 
 # Join hosts to the cluster
 for host in esx:
