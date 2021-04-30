@@ -41,16 +41,13 @@ def get_ssl_thumbprint(host_ip):
     return ssl_thumbprint.decode("utf-8")
 
 
-# Parse TF Vars
 subnets = private_subnets
-public_subnets = public_subnets
-public_cidrs = public_cidrs
+
 for i in range(len(public_cidrs)):
     public_subnets[i]["cidr"] = public_cidrs[i]
     subnets.append(public_subnets[i])
-esx_passes = esx_passwords
 esx = []
-for pw in esx_passes:
+for pw in esx_passwords:
     esx.append({"password": pw})
 
 for subnet in subnets:

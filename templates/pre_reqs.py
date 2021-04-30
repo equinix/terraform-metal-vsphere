@@ -54,10 +54,6 @@ os.system(
 
 # Build single subnet map with all vlans, cidrs, etc...
 subnets = private_subnets
-private_vlans = private_vlans
-public_subnets = public_subnets
-public_vlans = public_vlans
-public_cidrs = public_cidrs
 
 for i in range(0, len(private_vlans)):
     subnets[i]["vlan"] = private_vlans[i]
