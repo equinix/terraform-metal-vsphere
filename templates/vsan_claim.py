@@ -6,7 +6,7 @@ import ssl
 from vars import (
     vcenter_fqdn,
     vcenter_user,
-    vcenter_pass,
+    sso_password,
     vcenter_cluster_name,
     plan_type,
 )
@@ -73,7 +73,7 @@ context.verify_mode = ssl.CERT_NONE
 
 
 si = connect.SmartConnectNoSSL(
-    host=vcenter_fqdn, user=vcenter_user, pwd=vcenter_pass, port=443
+    host=vcenter_fqdn, user=vcenter_user, pwd=sso_password, port=443
 )
 cluster = getClusterInstance(vcenter_cluster_name, si)
 vcMos = vsanapiutils.GetVsanVcMos(si._stub, context=context)

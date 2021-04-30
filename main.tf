@@ -167,13 +167,13 @@ data "template_file" "vars" {
     vcenter_fqdn         = format("vcva.%s", var.domain_name)
     vcenter_user         = var.vcenter_user_name
     vcenter_domain       = var.vcenter_domain
-    vcenter_pass         = random_string.sso_password.result
+    vcenter_password     = random_string.vcenter_password.result
+    sso_password         = random_string.sso_password.result
     vcenter_cluster_name = var.vcenter_cluster_name
     cluster_name         = var.vcenter_cluster_name
     plan_type            = var.esxi_size
     esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password)
     dc_name              = var.vcenter_datacenter_name
-    sso_password         = random_string.sso_password.result
     metal_token          = var.auth_token
   }
 }
