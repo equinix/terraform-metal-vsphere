@@ -167,8 +167,8 @@ data "template_file" "vars" {
     vcenter_fqdn         = format("vcva.%s", var.domain_name)
     vcenter_user         = var.vcenter_user_name
     vcenter_domain       = var.vcenter_domain
-    vcenter_password     = random_string.vcenter_password.result
-    sso_password         = random_string.sso_password.result
+    vcenter_password     = random_password.vcenter_password.result
+    sso_password         = random_password.sso_password.result
     vcenter_cluster_name = var.vcenter_cluster_name
     plan_type            = var.esxi_size
     esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password)
@@ -260,30 +260,32 @@ resource "null_resource" "download_vcenter_iso" {
   }
 }
 
-resource "random_string" "ipsec_psk" {
+resource "random_password" "ipsec_psk" {
   length           = 20
   min_upper        = 2
   min_lower        = 2
   min_numeric      = 2
   min_special      = 2
   override_special = "$!?@*"
+  special          = true
 }
 
-resource "random_string" "vpn_pass" {
+resource "random_password" "vpn_pass" {
   length           = 16
   min_upper        = 2
   min_lower        = 2
   min_numeric      = 2
   min_special      = 2
   override_special = "$!?@*"
+  special          = true
 }
 
 data "template_file" "vpn_installer" {
   template = file("${path.module}/templates/l2tp_vpn.sh")
   vars = {
-    ipsec_psk = random_string.ipsec_psk.result
+    ipsec_psk = random_password.ipsec_psk.result
     vpn_user  = var.vpn_user
-    vpn_pass  = random_string.vpn_pass.result
+    vpn_pass  = random_password.vpn_pass.result
   }
 }
 
@@ -309,29 +311,31 @@ resource "null_resource" "install_vpn_server" {
   }
 }
 
-resource "random_string" "vcenter_password" {
+resource "random_password" "vcenter_password" {
   length           = 16
   min_upper        = 2
   min_lower        = 2
   min_numeric      = 2
   min_special      = 2
   override_special = "$!?@*"
+  special          = true
 }
 
-resource "random_string" "sso_password" {
+resource "random_password" "sso_password" {
   length           = 16
   min_upper        = 2
   min_lower        = 2
   min_numeric      = 2
   min_special      = 2
   override_special = "$!?@*"
+  special          = true
 }
 
 data "template_file" "vcva_template" {
   template = file("${path.module}/templates/vcva_template.json")
   vars = {
-    vcenter_password = random_string.vcenter_password.result
-    sso_password     = random_string.sso_password.result
+    vcenter_password = random_password.vcenter_password.result
+    sso_password     = random_password.sso_password.result
     first_esx_pass   = metal_device.esxi_hosts.0.root_password
     domain_name      = var.domain_name
     vcenter_network  = var.vcenter_portgroup_name
