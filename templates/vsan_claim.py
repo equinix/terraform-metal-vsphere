@@ -8,7 +8,7 @@ from vars import (
     vcenter_user,
     vcenter_pass,
     vcenter_cluster_name,
-    metal_server_plan,
+    plan_type,
 )
 
 # A large portion of this code was lifted from: https://github.com/storage-code/vsanDeploy/blob/master/vsanDeploy.py
@@ -59,7 +59,7 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
     return out
 
 
-if metal_server_plan[0].lower() == "s":
+if plan_type[0].lower() == "s":
     deploy_type = "hybrid"
 else:
     deploy_type = "allFlash"
