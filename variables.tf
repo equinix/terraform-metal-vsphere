@@ -101,8 +101,8 @@ variable "esxi_size" {
 }
 
 variable "facility" {
-  description = "This is the Region/Location of your deployment."
-  default     = "ny5"
+  description = "This is the Region/Location of your deployment (Must be an IBX facility)"
+  default     = "dc13"
 }
 
 variable "router_os" {
