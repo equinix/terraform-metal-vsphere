@@ -1,4 +1,3 @@
-import json
 import ipaddress
 import packet as metal
 import optparse
@@ -22,11 +21,11 @@ vswitch_name = "vSwitch1"
 del_vswitch_name = "vSwitch0"
 
 # Build single subnet map with all vlans, cidrs, etc...
-subnets = json.loads(private_subnets)
-private_vlans = json.loads(private_vlans)
-public_subnets = json.loads(public_subnets)
-public_vlans = json.loads(public_vlans)
-public_cidrs = json.loads(public_cidrs)
+subnets = private_subnets
+private_vlans = private_vlans
+public_subnets = public_subnets
+public_vlans = public_vlans
+public_cidrs = public_cidrs
 
 for i in range(len(private_vlans)):
     subnets[i]["vlan"] = private_vlans[i]

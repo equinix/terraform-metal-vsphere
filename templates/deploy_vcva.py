@@ -1,4 +1,3 @@
-import json
 import ipaddress
 import os
 import sys
@@ -43,13 +42,13 @@ def get_ssl_thumbprint(host_ip):
 
 
 # Parse TF Vars
-subnets = json.loads(private_subnets)
-public_subnets = json.loads(public_subnets)
-public_cidrs = json.loads(public_cidrs)
+subnets = private_subnets
+public_subnets = public_subnets
+public_cidrs = public_cidrs
 for i in range(len(public_cidrs)):
     public_subnets[i]["cidr"] = public_cidrs[i]
     subnets.append(public_subnets[i])
-esx_passes = json.loads(esx_passwords)
+esx_passes = esx_passwords
 esx = []
 for pw in esx_passes:
     esx.append({"password": pw})

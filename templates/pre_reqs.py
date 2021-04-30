@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-import json
 import os
 import ipaddress
 import urllib.request as urllib2
@@ -54,11 +53,11 @@ os.system(
 )
 
 # Build single subnet map with all vlans, cidrs, etc...
-subnets = json.loads(private_subnets)
-private_vlans = json.loads(private_vlans)
-public_subnets = json.loads(public_subnets)
-public_vlans = json.loads(public_vlans)
-public_cidrs = json.loads(public_cidrs)
+subnets = private_subnets
+private_vlans = private_vlans
+public_subnets = public_subnets
+public_vlans = public_vlans
+public_cidrs = public_cidrs
 
 for i in range(0, len(private_vlans)):
     subnets[i]["vlan"] = private_vlans[i]
