@@ -33,7 +33,7 @@ def get_ssl_thumbprint(host_ip):
 # Vars from Terraform
 private_subnets = """${private_subnets}"""
 public_subnets = """${public_subnets}"""
-public_cidrs = "${public_cidrs}"
+public_cidrs = """${public_cidrs}"""
 esx_passwords = """${esx_passwords}"""
 vcenter_username = "${vcenter_user}@${vcenter_domain}"
 sso_password = """${sso_password}"""

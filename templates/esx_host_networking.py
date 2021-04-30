@@ -14,7 +14,7 @@ private_subnets = """${private_subnets}"""
 private_vlans = "${private_vlans}"
 public_subnets = """${public_subnets}"""
 public_vlans = "${public_vlans}"
-public_cidrs = "${public_cidrs}"
+public_cidrs = """${public_cidrs}"""
 domain_name = "${domain_name}"
 metal_token = "${metal_token}"
 
