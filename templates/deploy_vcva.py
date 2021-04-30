@@ -75,23 +75,15 @@ if len(esx) == 1:
     os.system(command)
 
 os.system(
-    "sed -i 's/__ESXI_IP__/{}/g' $HOME/bootstrap/vcva_template.json".format(esx_ip)
-)
-os.system(
-    "sed -i 's/__VCENTER_IP__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        vcenter_ip
+    "sed -i -e 's/__ESXI_IP__/{}/g' "
+    "-e 's/__VCENTER_IP__/{}/g' "
+    "-e 's/__VCENTER_GATEWAY__/{}/g' "
+    "-e 's/__VCENTER_PREFIX_LENGTH__/{}/g' "
+    "$HOME/bootstrap/vcva_template.json".format(
+        esx_ip, vcenter_ip, gateway_ip, prefix_length
     )
 )
-os.system(
-    "sed -i 's/__VCENTER_GATEWAY__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        gateway_ip
-    )
-)
-os.system(
-    "sed -i 's/__VCENTER_PREFIX_LENGTH__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        prefix_length
-    )
-)
+
 os.system(
     "/mnt/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula --acknowledge-ceip "
     "--no-esx-ssl-verify $HOME/bootstrap/vcva_template.json"
