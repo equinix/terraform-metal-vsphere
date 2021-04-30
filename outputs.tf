@@ -39,7 +39,7 @@ output "vcenter_password" {
 output "vcenter_root_password" {
   value       = random_string.vcenter_password.result
   sensitive   = true
-  description = "The root password to ssh or login at the console of vCanter."
+  description = "The root password to ssh or login at the console of vCenter."
 }
 
 output "ssh_key_path" {
