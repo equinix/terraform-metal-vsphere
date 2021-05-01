@@ -1,4 +1,3 @@
-import json
 import ipaddress
 import os
 import sys
@@ -7,6 +6,18 @@ import socket
 from time import sleep
 from pyVmomi import vim
 from pyVim import connect
+from vars import (
+    private_subnets,
+    public_subnets,
+    public_cidrs,
+    esx_passwords,
+    vcenter_username,
+    sso_password,
+    dc_name,
+    vcenter_cluster_name,
+    vcenter_network,
+    domain_name,
+)
 
 
 def get_ssl_thumbprint(host_ip):
@@ -30,28 +41,13 @@ def get_ssl_thumbprint(host_ip):
     return ssl_thumbprint.decode("utf-8")
 
 
-# Vars from Terraform
-private_subnets = """${private_subnets}"""
-public_subnets = """${public_subnets}"""
-public_cidrs = """${public_cidrs}"""
-esx_passwords = """${esx_passwords}"""
-vcenter_username = "${vcenter_user}@${vcenter_domain}"
-sso_password = """${sso_password}"""
-dc_name = "${dc_name}"
-cluster_name = "${cluster_name}"
-vcenter_network = "${vcenter_network}"
-domain_name = "${domain_name}"
+subnets = private_subnets
 
-# Parse TF Vars
-subnets = json.loads(private_subnets)
-public_subnets = json.loads(public_subnets)
-public_cidrs = json.loads(public_cidrs)
 for i in range(len(public_cidrs)):
     public_subnets[i]["cidr"] = public_cidrs[i]
     subnets.append(public_subnets[i])
-esx_passes = json.loads(esx_passwords)
 esx = []
-for pw in esx_passes:
+for pw in esx_passwords:
     esx.append({"password": pw})
 
 for subnet in subnets:
@@ -79,23 +75,15 @@ if len(esx) == 1:
     os.system(command)
 
 os.system(
-    "sed -i 's/__ESXI_IP__/{}/g' $HOME/bootstrap/vcva_template.json".format(esx_ip)
-)
-os.system(
-    "sed -i 's/__VCENTER_IP__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        vcenter_ip
+    "sed -i -e 's/__ESXI_IP__/{}/g' "
+    "-e 's/__VCENTER_IP__/{}/g' "
+    "-e 's/__VCENTER_GATEWAY__/{}/g' "
+    "-e 's/__VCENTER_PREFIX_LENGTH__/{}/g' "
+    "$HOME/bootstrap/vcva_template.json".format(
+        esx_ip, vcenter_ip, gateway_ip, prefix_length
     )
 )
-os.system(
-    "sed -i 's/__VCENTER_GATEWAY__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        gateway_ip
-    )
-)
-os.system(
-    "sed -i 's/__VCENTER_PREFIX_LENGTH__/{}/g' $HOME/bootstrap/vcva_template.json".format(
-        prefix_length
-    )
-)
+
 os.system(
     "/mnt/vcsa-cli-installer/lin64/vcsa-deploy install --accept-eula --acknowledge-ceip "
     "--no-esx-ssl-verify $HOME/bootstrap/vcva_template.json"
@@ -146,7 +134,7 @@ if len(esx) > 1:
 
 # Create the cluster
 host_folder = dc.hostFolder
-cluster = host_folder.CreateClusterEx(name=cluster_name, spec=cluster_config)
+cluster = host_folder.CreateClusterEx(name=vcenter_cluster_name, spec=cluster_config)
 
 # Join hosts to the cluster
 for host in esx:

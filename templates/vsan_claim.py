@@ -3,7 +3,13 @@ from pyVim import connect
 import vsanapiutils
 import requests
 import ssl
-
+from vars import (
+    vcenter_fqdn,
+    vcenter_username,
+    sso_password,
+    vcenter_cluster_name,
+    plan_type,
+)
 
 # A large portion of this code was lifted from: https://github.com/storage-code/vsanDeploy/blob/master/vsanDeploy.py
 
@@ -53,13 +59,7 @@ def CollectMultiple(content, objects, parameters, handleNotFound=True):
     return out
 
 
-# Terraform Vars
-vcenter_fqdn = "${vcenter_fqdn}"
-vcenter_user = "${vcenter_user}@${vcenter_domain}"
-vcenter_pass = """${vcenter_pass}"""
-vcenter_cluster_name = "${vcenter_cluster_name}"
-metal_server_plan = "${plan_type}"
-if metal_server_plan[0].lower() == "s":
+if plan_type[0].lower() == "s":
     deploy_type = "hybrid"
 else:
     deploy_type = "allFlash"
@@ -73,7 +73,7 @@ context.verify_mode = ssl.CERT_NONE
 
 
 si = connect.SmartConnectNoSSL(
-    host=vcenter_fqdn, user=vcenter_user, pwd=vcenter_pass, port=443
+    host=vcenter_fqdn, user=vcenter_username, pwd=sso_password, port=443
 )
 cluster = getClusterInstance(vcenter_cluster_name, si)
 vcMos = vsanapiutils.GetVsanVcMos(si._stub, context=context)
