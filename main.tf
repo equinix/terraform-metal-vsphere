@@ -84,14 +84,15 @@ resource "metal_vlan" "public_vlans" {
 }
 
 resource "metal_device" "router" {
-  depends_on       = [metal_ssh_key.ssh_pub_key]
-  hostname         = var.router_hostname
-  plan             = var.router_size
-  facilities       = var.facility == "" ? null : [var.facility]
-  metro            = var.metro == "" ? null : var.metro
-  operating_system = var.router_os
-  billing_cycle    = var.billing_cycle
-  project_id       = local.project_id
+  depends_on              = [metal_ssh_key.ssh_pub_key]
+  hostname                = var.router_hostname
+  plan                    = var.router_size
+  facilities              = var.facility == "" ? null : [var.facility]
+  metro                   = var.metro == "" ? null : var.metro
+  operating_system        = var.router_os
+  billing_cycle           = var.billing_cycle
+  project_id              = local.project_id
+  hardware_reservation_id = lookup(var.reservations, var.router_hostname, "")
 }
 
 resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
@@ -115,15 +116,16 @@ resource "metal_ip_attachment" "block_assignment" {
 }
 
 resource "metal_device" "esxi_hosts" {
-  depends_on       = [metal_ssh_key.ssh_pub_key]
-  count            = var.esxi_host_count
-  hostname         = format("%s%02d", var.esxi_hostname, count.index + 1)
-  plan             = var.esxi_size
-  facilities       = var.facility == "" ? null : [var.facility]
-  metro            = var.metro == "" ? null : var.metro
-  operating_system = var.vmware_os
-  billing_cycle    = var.billing_cycle
-  project_id       = local.project_id
+  depends_on              = [metal_ssh_key.ssh_pub_key]
+  count                   = var.esxi_host_count
+  hostname                = format("%s%02d", var.esxi_hostname, count.index + 1)
+  plan                    = var.esxi_size
+  facilities              = var.facility == "" ? null : [var.facility]
+  metro                   = var.metro == "" ? null : var.metro
+  operating_system        = var.vmware_os
+  billing_cycle           = var.billing_cycle
+  project_id              = local.project_id
+  hardware_reservation_id = lookup(var.reservations, format("%s%02d", var.esxi_hostname, count.index + 1), "")
   ip_address {
     type            = "public_ipv4"
     cidr            = 29
