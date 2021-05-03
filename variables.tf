@@ -260,3 +260,17 @@ variable "vcenter_iso_name" {
   description = "The name of the vCenter ISO in your Object Store"
   type        = string
 }
+
+variable "reservations" {
+  description = <<-EOF
+  A map of hostnames to reservation ids. Any hostname not defined will use the default behavior of not using a reservation. Mapped values may be UUIDs of reservations, 'next-available', or empty string.
+
+  Warning: Mixing "next-available" and known reservations may result in race conditions. The host requests are submitted at the same time and the "next-available" chosen by the Equinix Metal API may be one of the resources defined by UUID in this list.
+
+  Examples:
+  - {"edge-gateway01": "next-available"}
+  - {"esx01": "f3bf4e58-99e7-47ef-a0eb-8cbf727bc76f", "esx02": "b3f6b4eb-64b9-4cf1-9e39-f11a8ba9da20"}
+  EOF
+  type        = map(any)
+  default     = {}
+}
