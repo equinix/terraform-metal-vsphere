@@ -51,6 +51,10 @@ resource "local_file" "project_private_key_pem" {
   }
 }
 
+data "metal_facility" "facility" {
+  code = metal_device.router.deployed_facility
+}
+
 resource "metal_reserved_ip_block" "ip_blocks" {
   count      = length(var.public_subnets)
   project_id = local.project_id
@@ -95,21 +99,31 @@ resource "metal_device" "router" {
   hardware_reservation_id = lookup(var.reservations, var.router_hostname, "")
 }
 
-resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
-  count     = length(metal_vlan.private_vlans)
+resource "metal_device_network_type" "router" {
+  count = contains(data.metal_facility.facility.features, "ibx") ? 0 : 1
+
   device_id = metal_device.router.id
-  port_name = "bond0"
-  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
+  type      = "hybrid"
+}
+
+resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
+  depends_on = [metal_device_network_type.router]
+  count      = length(metal_vlan.private_vlans)
+  device_id  = metal_device.router.id
+  port_name  = contains(data.metal_facility.facility.features, "ibx") ? "bond0" : "eth1"
+  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
 }
 
 resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
-  count     = length(metal_vlan.public_vlans)
-  device_id = metal_device.router.id
-  port_name = "bond0"
-  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
+  depends_on = [metal_device_network_type.router]
+  count      = length(metal_vlan.public_vlans)
+  device_id  = metal_device.router.id
+  port_name  = contains(data.metal_facility.facility.features, "ibx") ? "bond0" : "eth1"
+  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
 }
 
 resource "metal_ip_attachment" "block_assignment" {
+  depends_on    = [metal_device_network_type.router]
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
