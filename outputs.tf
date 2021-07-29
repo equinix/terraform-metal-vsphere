@@ -43,7 +43,7 @@ output "vcenter_root_password" {
 }
 
 output "ssh_key_path" {
-  value       = "$HOME/.ssh/${local.ssh_key_name}"
+  value       = pathexpand("~/.ssh/${local.ssh_key_name}")
   description = "The path of to the private SSH key created for this deployment"
 }
 
