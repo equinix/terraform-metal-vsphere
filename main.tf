@@ -99,31 +99,18 @@ resource "metal_device" "router" {
   hardware_reservation_id = lookup(var.reservations, var.router_hostname, "")
 }
 
-resource "metal_device_network_type" "router" {
-  count = contains(data.metal_facility.facility.features, "ibx") ? 0 : 1
-
-  device_id = metal_device.router.id
-  type      = "hybrid"
+locals {
+  hybrid_bonded_router = contains(data.metal_facility.facility.features, "ibx") ? true : false
 }
 
-resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
-  depends_on = [metal_device_network_type.router]
-  count      = length(metal_vlan.private_vlans)
-  device_id  = metal_device.router.id
-  port_name  = contains(data.metal_facility.facility.features, "ibx") ? "bond0" : "eth1"
-  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
-}
-
-resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
-  depends_on = [metal_device_network_type.router]
-  count      = length(metal_vlan.public_vlans)
-  device_id  = metal_device.router.id
-  port_name  = contains(data.metal_facility.facility.features, "ibx") ? "bond0" : "eth1"
-  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
+resource "metal_port" "router" {
+  bonded   = local.hybrid_bonded_router
+  port_id  = [for p in metal_device.router.ports : p.id if p.name == (local.hybrid_bonded_router ? "bond0" : "eth1")][0]
+  vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
 }
 
 resource "metal_ip_attachment" "block_assignment" {
-  depends_on    = [metal_device_network_type.router]
+  depends_on    = [metal_port.router]
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
@@ -153,27 +140,11 @@ resource "metal_device" "esxi_hosts" {
   }
 }
 
-resource "metal_device_network_type" "esxi_hosts" {
-  count     = var.esxi_host_count
-  device_id = metal_device.esxi_hosts[count.index].id
-  type      = "hybrid"
-}
-
-resource "metal_port_vlan_attachment" "esxi_priv_vlan_attach" {
-  depends_on = [metal_device_network_type.esxi_hosts]
-  count      = length(metal_device.esxi_hosts) * length(metal_vlan.private_vlans)
-  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.private_vlans)))
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
-}
-
-
-resource "metal_port_vlan_attachment" "esxi_pub_vlan_attach" {
-  depends_on = [metal_device_network_type.esxi_hosts]
-  count      = length(metal_device.esxi_hosts) * length(metal_vlan.public_vlans)
-  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.public_vlans)))
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
+resource "metal_port" "esxi_hosts" {
+  count    = length(metal_device.esxi_hosts)
+  bonded   = false
+  port_id  = [for p in metal_device.esxi_hosts[count.index].ports : p.id if p.name == "eth1"][0]
+  vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
 }
 
 data "template_file" "vars" {
@@ -414,8 +385,7 @@ resource "null_resource" "esx_network_prereqs" {
 resource "null_resource" "apply_esx_network_config" {
   count = length(metal_device.esxi_hosts)
   depends_on = [
-    metal_port_vlan_attachment.esxi_priv_vlan_attach,
-    metal_port_vlan_attachment.esxi_pub_vlan_attach,
+    metal_port.esxi_hosts,
     null_resource.esx_network_prereqs,
     null_resource.copy_update_uplinks,
     null_resource.install_vpn_server
