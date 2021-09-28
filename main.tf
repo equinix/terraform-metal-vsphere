@@ -51,6 +51,10 @@ resource "local_file" "project_private_key_pem" {
   }
 }
 
+data "metal_facility" "facility" {
+  code = metal_device.router.deployed_facility
+}
+
 resource "metal_reserved_ip_block" "ip_blocks" {
   count      = length(var.public_subnets)
   project_id = local.project_id
@@ -95,21 +99,25 @@ resource "metal_device" "router" {
   hardware_reservation_id = lookup(var.reservations, var.router_hostname, "")
 }
 
-resource "metal_port_vlan_attachment" "router_priv_vlan_attach" {
-  count     = length(metal_vlan.private_vlans)
-  device_id = metal_device.router.id
-  port_name = "bond0"
-  vlan_vnid = element(metal_vlan.private_vlans.*.vxlan, count.index)
+locals {
+  hybrid_bonded_router = contains(data.metal_facility.facility.features, "ibx") ? true : false
 }
 
-resource "metal_port_vlan_attachment" "router_pub_vlan_attach" {
-  count     = length(metal_vlan.public_vlans)
-  device_id = metal_device.router.id
-  port_name = "bond0"
-  vlan_vnid = element(metal_vlan.public_vlans.*.vxlan, count.index)
+resource "metal_port" "router" {
+  bonded   = local.hybrid_bonded_router
+  port_id  = [for p in metal_device.router.ports : p.id if p.name == (local.hybrid_bonded_router ? "bond0" : "eth1")][0]
+  vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
+
+  # vlans can't delete when ports are connected to them.
+  # if the device is deleted without disconnecting first,
+  # we won't be able to detach ports properly and the vlan
+  # delete will fail until the device instance is completely
+  # deleted.
+  reset_on_delete = true
 }
 
 resource "metal_ip_attachment" "block_assignment" {
+  depends_on    = [metal_port.router]
   count         = length(metal_reserved_ip_block.ip_blocks)
   device_id     = metal_device.router.id
   cidr_notation = element(metal_reserved_ip_block.ip_blocks.*.cidr_notation, count.index)
@@ -139,50 +147,20 @@ resource "metal_device" "esxi_hosts" {
   }
 }
 
-resource "metal_device_network_type" "esxi_hosts" {
-  count     = var.esxi_host_count
-  device_id = metal_device.esxi_hosts[count.index].id
-  type      = "hybrid"
-}
+resource "metal_port" "esxi_hosts" {
+  count    = length(metal_device.esxi_hosts)
+  bonded   = false
+  port_id  = [for p in metal_device.esxi_hosts[count.index].ports : p.id if p.name == "eth1"][0]
+  vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
 
-resource "metal_port_vlan_attachment" "esxi_priv_vlan_attach" {
-  depends_on = [metal_device_network_type.esxi_hosts]
-  count      = length(metal_device.esxi_hosts) * length(metal_vlan.private_vlans)
-  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.private_vlans)))
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.private_vlans.*.vxlan, count.index)
-}
+  reset_on_delete = true
 
-
-resource "metal_port_vlan_attachment" "esxi_pub_vlan_attach" {
-  depends_on = [metal_device_network_type.esxi_hosts]
-  count      = length(metal_device.esxi_hosts) * length(metal_vlan.public_vlans)
-  device_id  = element(metal_device.esxi_hosts.*.id, ceil(count.index / length(metal_vlan.public_vlans)))
-  port_name  = "eth1"
-  vlan_vnid  = element(metal_vlan.public_vlans.*.vxlan, count.index)
-}
-
-data "template_file" "vars" {
-  template = file("${path.module}/templates/vars.py")
-  vars = {
-    private_subnets      = jsonencode(var.private_subnets)
-    private_vlans        = jsonencode(metal_vlan.private_vlans.*.vxlan)
-    public_subnets       = jsonencode(var.public_subnets)
-    public_vlans         = jsonencode(metal_vlan.public_vlans.*.vxlan)
-    public_cidrs         = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation)
-    domain_name          = var.domain_name
-    vcenter_network      = var.vcenter_portgroup_name
-    vcenter_fqdn         = format("vcva.%s", var.domain_name)
-    vcenter_user         = var.vcenter_user_name
-    vcenter_domain       = var.vcenter_domain
-    sso_password         = random_password.sso_password.result
-    vcenter_cluster_name = var.vcenter_cluster_name
-    plan_type            = var.esxi_size
-    esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password)
-    dc_name              = var.vcenter_datacenter_name
-    metal_token          = var.auth_token
+  lifecycle {
+    # vlan_ids will move to the bond0 port during the ssh provisioning conversion to L2-Bonded mode
+    ignore_changes = [vlan_ids]
   }
 }
+
 
 resource "null_resource" "run_pre_reqs" {
   connection {
@@ -197,7 +175,25 @@ resource "null_resource" "run_pre_reqs" {
   }
 
   provisioner "file" {
-    content     = data.template_file.vars.rendered
+    content = templatefile("${path.module}/templates/vars.py", {
+      private_subnets      = jsonencode(var.private_subnets),
+      private_vlans        = jsonencode(metal_vlan.private_vlans.*.vxlan),
+      public_subnets       = jsonencode(var.public_subnets),
+      public_vlans         = jsonencode(metal_vlan.public_vlans.*.vxlan),
+      public_cidrs         = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation),
+      domain_name          = var.domain_name,
+      vcenter_network      = var.vcenter_portgroup_name,
+      vcenter_fqdn         = format("vcva.%s", var.domain_name),
+      vcenter_user         = var.vcenter_user_name,
+      vcenter_domain       = var.vcenter_domain,
+      sso_password         = random_password.sso_password.result,
+      vcenter_cluster_name = var.vcenter_cluster_name,
+      plan_type            = var.esxi_size,
+      esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password),
+      dc_name              = var.vcenter_datacenter_name,
+      metal_token          = var.auth_token,
+    })
+
     destination = "$HOME/bootstrap/vars.py"
   }
 
@@ -338,17 +334,6 @@ resource "random_password" "sso_password" {
   special          = true
 }
 
-data "template_file" "vcva_template" {
-  template = file("${path.module}/templates/vcva_template.json")
-  vars = {
-    vcenter_password = random_password.vcenter_password.result
-    sso_password     = random_password.sso_password.result
-    first_esx_pass   = metal_device.esxi_hosts.0.root_password
-    domain_name      = var.domain_name
-    vcenter_network  = var.vcenter_portgroup_name
-    vcenter_domain   = var.vcenter_domain
-  }
-}
 
 resource "null_resource" "copy_vcva_template" {
   depends_on = [
@@ -362,7 +347,15 @@ resource "null_resource" "copy_vcva_template" {
   }
 
   provisioner "file" {
-    content     = data.template_file.vcva_template.rendered
+    content = templatefile("${path.module}/templates/vcva_template.json", {
+      vcenter_password = random_password.vcenter_password.result,
+      sso_password     = random_password.sso_password.result,
+      first_esx_pass   = metal_device.esxi_hosts.0.root_password,
+      domain_name      = var.domain_name,
+      vcenter_network  = var.vcenter_portgroup_name,
+      vcenter_domain   = var.vcenter_domain,
+    })
+
     destination = "$HOME/bootstrap/vcva_template.json"
   }
 }
@@ -400,8 +393,7 @@ resource "null_resource" "esx_network_prereqs" {
 resource "null_resource" "apply_esx_network_config" {
   count = length(metal_device.esxi_hosts)
   depends_on = [
-    metal_port_vlan_attachment.esxi_priv_vlan_attach,
-    metal_port_vlan_attachment.esxi_pub_vlan_attach,
+    metal_port.esxi_hosts,
     null_resource.esx_network_prereqs,
     null_resource.copy_update_uplinks,
     null_resource.install_vpn_server
