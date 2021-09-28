@@ -107,6 +107,13 @@ resource "metal_port" "router" {
   bonded   = local.hybrid_bonded_router
   port_id  = [for p in metal_device.router.ports : p.id if p.name == (local.hybrid_bonded_router ? "bond0" : "eth1")][0]
   vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
+
+  # vlans can't delete when ports are connected to them.
+  # if the device is deleted without disconnecting first,
+  # we won't be able to detach ports properly and the vlan
+  # delete will fail until the device instance is completely
+  # deleted.
+  reset_on_delete = true
 }
 
 resource "metal_ip_attachment" "block_assignment" {
@@ -145,6 +152,8 @@ resource "metal_port" "esxi_hosts" {
   bonded   = false
   port_id  = [for p in metal_device.esxi_hosts[count.index].ports : p.id if p.name == "eth1"][0]
   vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
+
+  reset_on_delete = true
 
   lifecycle {
     # vlan_ids will move to the bond0 port during the ssh provisioning conversion to L2-Bonded mode
