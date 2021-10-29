@@ -59,27 +59,29 @@ relative_path_to_gcs_key = "storage-reader-key.json"
 
 ## Upload files to your Object Store
 You will need to layout the object store structure to look like this:
+
 ```console
 Object Store Root: 
     | 
     |__ Bucket_Name 
         | 
-        |__ VMware-VCSA-all-6.7.0-14367737.iso
+        |__ VMware-VCSA-all-7.0.3-18700403.iso
         | 
         |__ vsanapiutils.py
         | 
         |__ vsanmgmtObjects.py
 ```
-Your VMware ISO name may vary depending on which build you download.
+
+Your VMware ISO name may vary depending on which build you download. If you choose VMWare 7.0, be sure to use version 7.0u3 or greater, per [VMSA-2021-0020.1](https://www.vmware.com/security/advisories/VMSA-2021-0020.html).
 
 These files can be downloaded from [My VMware](http://my.vmware.com).
 
 Once logged in to "My VMware" the download links are as follows:
 
-* [VMware vCenter Server 6.7U3](https://my.vmware.com/group/vmware/details?downloadGroup=VC67U3B&productId=742&rPId=40665) - VMware vCenter Server Appliance ISO
-* [VMware vSAN Management SDK 6.7U3](https://my.vmware.com/group/vmware/details?downloadGroup=VSAN-MGMT-SDK67U3&productId=734) - Virtual SAN Management SDK for Python
+* [VMware vCenter Server 7.0U3](https://customerconnect.vmware.com/en/group/vmware/evalcenter?p=vsphere-eval-7&source=evap) - VMware vCenter Server Appliance ISO
+* [VMware vSAN Management SDK 7.0U3](https://code.vmware.com/web/sdk/7.0%20U3/vsan-python ) - Virtual SAN Management SDK for Python
 
-You will need to find the two individual Python files in the vSAN SDK zip file and place them in your object store bucket as shown above.
+You will need to find the Python files in the vSAN SDK zip file (`binding/vsanmgmtObjects.py`, `samplecode/vsanapiutils.py`) and place them in your object store bucket as shown above. Make sure the version of the Python SDK matches the version of vCenter Server and the version of the ESXi image chosen.
 
 ## Modify your variables
 
@@ -90,16 +92,16 @@ There are some variables you must set with a `terraform.tfvars` files. You need 
 Here is a quick command plus sample values (assuming an S3 object store) to start file for you (make sure you adjust the variables to match your environment, pay special attention that the `vcenter_iso_name` matches whats in your bucket):
 
 ```bash
-cat <<EOF >terraform.tfvars 
-auth_token = "cefa5c94-e8ee-4577-bff8-1d1edca93ed8" 
-organization_id = "42259e34-d300-48b3-b3e1-d5165cd14169" 
+cat <<EOF >terraform.tfvars
+auth_token = "cefa5c94-e8ee-4577-bff8-1d1edca93ed8"
+organization_id = "42259e34-d300-48b3-b3e1-d5165cd14169"
 project_name = "vmware-metal-project-1"
-s3_url = "https://s3.example.com" 
-object_store_bucket_name = "vmware" 
-s3_access_key = "4fa85962-975f-4650-b603-17f1cb9dee10" 
-s3_secret_key = "becf3868-3f07-4dbb-a6d5-eacfd7512b09" 
-vcenter_iso_name = "VMware-VCSA-all-6.7.0-XXXXXXX.iso" 
-EOF 
+s3_url = "https://s3.example.com"
+object_store_bucket_name = "vmware"
+s3_access_key = "4fa85962-975f-4650-b603-17f1cb9dee10"
+s3_secret_key = "becf3868-3f07-4dbb-a6d5-eacfd7512b09"
+vcenter_iso_name = "VMware-VCSA-all-7.0.3-XXXXXXX.iso"
+EOF
 ```
 
 ## Deploy the Equinix Metal vSphere cluster

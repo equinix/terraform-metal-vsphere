@@ -36,10 +36,6 @@ os.system(
     "echo 'iptables-persistent iptables-persistent/autosave_v6 boolean true' | sudo debconf-set-selections"
 )
 
-# Disable systemd-resolved
-os.system("systemctl stop systemd-resolved")
-os.system("systemctl disable systemd-resolved")
-
 # Install Apt Packages
 os.system(
     "echo 'deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main' > /etc/apt/sources.list.d/google-cloud-sdk.list"
@@ -49,7 +45,7 @@ os.system(
 )
 os.system("DEBIAN_FRONTEND=noninteractive apt-get update -y")
 os.system(
-    'DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip expect unzip google-cloud-sdk'
+    'DEBIAN_FRONTEND=noninteractive apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y dnsmasq vlan iptables-persistent conntrack python3-pip expect unzip python3-defusedxml google-cloud-sdk'
 )
 
 # Build single subnet map with all vlans, cidrs, etc...
