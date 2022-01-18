@@ -11,6 +11,8 @@
 # Copyright (C) 2014-2019 Lin Song <linsongui@gmail.com>
 # Based on the work of Thomas Sarlandie (Copyright 2012)
 #
+# Modified by Darryl Weaver, Weaveworks
+#
 # This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
 # Unported License: http://creativecommons.org/licenses/by-sa/3.0/
 #
@@ -32,6 +34,17 @@ YOUR_PASSWORD='${vpn_pass}'
 # Setup VPN clients: https://git.io/vpnclients
 
 # =====================================================
+
+#########################################
+#########################################
+#  ADD YOUR SA HOME OFFICE IPS HERE
+SA1_IP=81.98.197.209
+SA2_IP=38.126.101.249
+SA3_IP=38.126.101.249
+##########################################
+#This is for access without the VPN, otherwise use the VPN to access the public IPs.
+
+
 
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 SYS_DT=$(date +%F-%T)
@@ -200,6 +213,7 @@ fi
 
 bigecho "Creating VPN configuration..."
 
+PUBNET=$(ip addr show dev bond0.1000 | grep "inet " | sed -e 's/.*inet //' -e 's/ brd.*//')
 L2TP_NET='192.168.42.0/24'
 L2TP_LOCAL='192.168.42.1'
 L2TP_POOL='192.168.42.10-192.168.42.250'
@@ -390,12 +404,18 @@ if [ "$ipt_flag" = "1" ]; then
   iptables -I FORWARD 4 -i ppp+ -o ppp+ -s "$L2TP_NET" -d "$L2TP_NET" -j ACCEPT
   iptables -I FORWARD 5 -i "$NET_IFACE" -d "$XAUTH_NET" -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
   iptables -I FORWARD 6 -s "$XAUTH_NET" -o "$NET_IFACE" -j ACCEPT
+  iptables -I FORWARD 7 -s "$SA1_IP" -j ACCEPT 
+  iptables -I FORWARD 8 -s "$SA2_IP" -j ACCEPT
+  iptables -I FORWARD 9 -s "$SA3_IP" -j ACCEPT
+  iptables -I FORWARD 10 -s 172.16.0.0/24 -j ACCEPT
   # Uncomment if you wish to disallow traffic between VPN clients themselves
   # iptables -I FORWARD 2 -i ppp+ -o ppp+ -s "$L2TP_NET" -d "$L2TP_NET" -j DROP
   # iptables -I FORWARD 3 -s "$XAUTH_NET" -d "$XAUTH_NET" -j DROP
-  #iptables -A FORWARD -j DROP
+  iptables -A FORWARD -j DROP
   iptables -t nat -I POSTROUTING -s "$XAUTH_NET" -o "$NET_IFACE" -m policy --dir out --pol none -j MASQUERADE
   iptables -t nat -I POSTROUTING -s "$L2TP_NET" -o "$NET_IFACE" -j MASQUERADE
+  iptables -t nat -I POSTROUTING -s 172.16.0.0/24 -o "$NET_IFACE" -j MASQUERADE
+  
   echo "# Modified by hwdsl2 VPN script" > "$IPT_FILE"
   iptables-save >> "$IPT_FILE"
 
