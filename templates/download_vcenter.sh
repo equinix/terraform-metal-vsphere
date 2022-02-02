@@ -29,8 +29,8 @@ if [ $object_store_tool = "gcs" ]; then
   gsutil cp gs://${object_store_bucket_name}/vsanmgmtObjects.py .
 elif [ $object_store_tool = "mc" ]; then
   echo "USING S3"
-  curl -LO https://dl.min.io/client/mc/release/linux-amd64/mc
-  chmod +x mc
+  curl -Lo mc https://dl.min.io/client/mc/release/linux-amd64/archive/mc.RELEASE.2022-01-07T06-01-38Z
+  echo -n '33d25b2242626d1e07ce7341a9ecc2164c0ef5c0  mc' | shasum -a1 -c - && chmod +x mc
   mv mc /usr/local/bin/
   mc config host add s3 ${s3_url} ${s3_access_key} ${s3_secret_key}
   mc cp s3/${object_store_bucket_name}/${vcenter_iso_name} .
