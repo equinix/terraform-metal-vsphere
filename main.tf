@@ -344,12 +344,13 @@ resource "null_resource" "copy_vcva_template" {
 
   provisioner "file" {
     content = templatefile("${path.module}/templates/vcva_template.json", {
-      vcenter_password = random_password.vcenter_password.result,
-      sso_password     = random_password.sso_password.result,
-      first_esx_pass   = metal_device.esxi_hosts.0.root_password,
-      domain_name      = var.domain_name,
-      vcenter_network  = var.vcenter_portgroup_name,
-      vcenter_domain   = var.vcenter_domain,
+      vcenter_password        = random_password.vcenter_password.result,
+      sso_password            = random_password.sso_password.result,
+      first_esx_pass          = metal_device.esxi_hosts.0.root_password,
+      domain_name             = var.domain_name,
+      vcenter_network         = var.vcenter_portgroup_name,
+      vcenter_domain          = var.vcenter_domain,
+      vcva_deployment_option  = var.vcva_deployment_option
     })
 
     destination = "bootstrap/vcva_template.json"

@@ -274,3 +274,14 @@ variable "reservations" {
   type        = map(any)
   default     = {}
 }
+
+variable "vcva_deployment_option" {
+  description = <<-EOF
+  Size of the vCenter appliance: tiny, tiny-lstorage, ..., small, etc.
+  Each option has different CPU, memory, and storage requirements.
+  For the full list of options, see
+  https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vcenter.install.doc/GUID-457EAE1F-B08A-4E64-8506-8A3FA84A0446.html#GUID-457EAE1F-B08A-4E64-8506-8A3FA84A0446__row_5D65E7455996456CBDCB3EF9A7DCDC62__entry__1
+  EOF
+  type        = string
+  default     = "small"
+}
