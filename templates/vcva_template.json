@@ -10,7 +10,7 @@
     },
     "appliance": {
       "thin_disk_mode": true,
-      "deployment_option": "small",
+      "deployment_option": "${vcva_deployment_option}",
       "name": "vcva"
     },
     "network": {
