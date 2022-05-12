@@ -147,11 +147,68 @@ resource "metal_device" "esxi_hosts" {
   }
 }
 
+resource "null_resource" "reboot_pre_upgrade" {
+
+  depends_on = [metal_device.esxi_hosts]
+  count      = var.update_esxi ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "sleep 250"
+  }
+}
+
+data "template_file" "upgrade_script" {
+  count    = var.update_esxi ? 1 : 0
+  template = "${file("${path.module}/templates/update_esxi.sh.tpl")}"
+  vars = {
+    esxi_update_filename = "${var.esxi_update_filename}"
+  }
+}
+
+# Run the ESXi update script file in each server.
+# If you make changes to the shell script, you need to update the sed command line number to get rid of te { at the end of the file which gets created by Terraform for some reason.
+resource "null_resource" "upgrade_nodes" {
+
+  depends_on  = [null_resource.reboot_pre_upgrade]
+  count       = var.update_esxi ? length(metal_device.esxi_hosts) : 0
+
+  connection {
+    user        = local.ssh_user
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    host        = "${element(metal_device.esxi_hosts.*.access_public_ipv4, count.index)}"
+  }
+
+  provisioner "file" {
+    content     = "${data.template_file.upgrade_script.0.rendered}"
+    destination = "/tmp/update_esxi.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sed -i '27d' /tmp/update_esxi.sh",
+      "echo 'Running update script on remote host.'",
+      "chmod +x /tmp/update_esxi.sh",
+      "/tmp/update_esxi.sh"
+    ]
+  }
+}
+
+resource "null_resource" "reboot_post_upgrade" {
+
+  depends_on = [null_resource.upgrade_nodes]
+  count      = var.update_esxi ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "sleep 250"
+  }
+}
+
 resource "metal_port" "esxi_hosts" {
-  count    = length(metal_device.esxi_hosts)
-  bonded   = false
-  port_id  = [for p in metal_device.esxi_hosts[count.index].ports : p.id if p.name == "eth1"][0]
-  vlan_ids = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
+  depends_on  = [null_resource.reboot_post_upgrade]
+  count       = length(metal_device.esxi_hosts)
+  bonded      = false
+  port_id     = [for p in metal_device.esxi_hosts[count.index].ports : p.id if p.name == "eth1"][0]
+  vlan_ids    = concat(metal_vlan.private_vlans.*.id, metal_vlan.public_vlans.*.id)
 
   reset_on_delete = true
 
@@ -161,6 +218,27 @@ resource "metal_port" "esxi_hosts" {
   }
 }
 
+data "template_file" "vars_file" {
+  template = "${file("${path.module}/templates/vars.py")}"
+  vars = {
+    private_subnets      = jsonencode(var.private_subnets),
+    private_vlans        = jsonencode(metal_vlan.private_vlans.*.vxlan),
+    public_subnets       = jsonencode(var.public_subnets),
+    public_vlans         = jsonencode(metal_vlan.public_vlans.*.vxlan),
+    public_cidrs         = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation),
+    domain_name          = var.domain_name,
+    vcenter_network      = var.vcenter_portgroup_name,
+    vcenter_fqdn         = format("vcva.%s", var.domain_name),
+    vcenter_user         = var.vcenter_user_name,
+    vcenter_domain       = var.vcenter_domain,
+    sso_password         = random_password.sso_password.result,
+    vcenter_cluster_name = var.vcenter_cluster_name,
+    plan_type            = var.esxi_size,
+    esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password),
+    dc_name              = var.vcenter_datacenter_name,
+    metal_token          = var.auth_token,
+  }
+}
 
 resource "null_resource" "run_pre_reqs" {
   connection {
@@ -175,25 +253,7 @@ resource "null_resource" "run_pre_reqs" {
   }
 
   provisioner "file" {
-    content = templatefile("${path.module}/templates/vars.py", {
-      private_subnets      = jsonencode(var.private_subnets),
-      private_vlans        = jsonencode(metal_vlan.private_vlans.*.vxlan),
-      public_subnets       = jsonencode(var.public_subnets),
-      public_vlans         = jsonencode(metal_vlan.public_vlans.*.vxlan),
-      public_cidrs         = jsonencode(metal_reserved_ip_block.ip_blocks.*.cidr_notation),
-      domain_name          = var.domain_name,
-      vcenter_network      = var.vcenter_portgroup_name,
-      vcenter_fqdn         = format("vcva.%s", var.domain_name),
-      vcenter_user         = var.vcenter_user_name,
-      vcenter_domain       = var.vcenter_domain,
-      sso_password         = random_password.sso_password.result,
-      vcenter_cluster_name = var.vcenter_cluster_name,
-      plan_type            = var.esxi_size,
-      esx_passwords        = jsonencode(metal_device.esxi_hosts.*.root_password),
-      dc_name              = var.vcenter_datacenter_name,
-      metal_token          = var.auth_token,
-    })
-
+    content = "${data.template_file.vars_file.rendered}"
     destination = "bootstrap/vars.py"
   }
 
@@ -390,7 +450,7 @@ resource "null_resource" "esx_network_prereqs" {
 resource "null_resource" "apply_esx_network_config" {
   count = length(metal_device.esxi_hosts)
   depends_on = [
-    metal_port.esxi_hosts,
+    null_resource.reboot_post_upgrade,
     null_resource.esx_network_prereqs,
     null_resource.copy_update_uplinks,
     null_resource.install_vpn_server
