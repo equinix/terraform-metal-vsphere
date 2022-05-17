@@ -48,7 +48,7 @@ s3_version               = "S3v4"
 ```
 
 ### Google Cloud Storage (GCS)
-We also have the optoin to use Google Cloud Storage (GCS). The setup will use a service account with Storage Reader permissions to download the needed files.
+We also have the option to use Google Cloud Storage (GCS). The setup will use a service account with Storage Reader permissions to download the needed files.
 
 The following settings will be needed in your `terraform.tfvars` to use GCS
 ```console
@@ -87,7 +87,7 @@ You will need to find the Python files in the vSAN SDK zip file (`binding/vsanmg
 
 There are many variables which can be set to customize your install within `vars.tf`. The default variables to bring up a 3 node vSphere cluster and linux router using Equinix Metal's [c3.medium.x86](https://metal.equinix.com/product/servers/). Change each default variable at your own risk.
 
-There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will to setup you object store to download "Closed Source" packages such as vCenter. You'll provide the needed variables as descibed above as well as the vCenter ISO file name as `vcenter_iso_name`.
+There are some variables you must set with a `terraform.tfvars` files. You need to set `auth_token` & `organization_id` to connect to Equinix Metal and the `project_name` which will be created in Equinix Metal. We will to setup you object store to download "Closed Source" packages such as vCenter. You'll provide the needed variables as described above as well as the vCenter ISO file name as `vcenter_iso_name`.
 
 Here is a quick command plus sample values (assuming an S3 object store) to start file for you (make sure you adjust the variables to match your environment, pay special attention that the `vcenter_iso_name` matches whats in your bucket):
 
@@ -103,6 +103,19 @@ s3_secret_key = "becf3868-3f07-4dbb-a6d5-eacfd7512b09"
 vcenter_iso_name = "VMware-VCSA-all-7.0.3-XXXXXXX.iso"
 EOF
 ```
+
+## Upgrading ESXi version
+
+For some servers on Equinix Metal, only an older version of ESXi is available (6.5). You can upgrade such servers to a more recent version by setting `update_esxi = true`, and specifying an `esxi_update_filename` (refer to [VMware ESXi Patch Tracker](https://esxi-patches.v-front.de/) for latest update versions). The upgrade will be performed right after a server has been provisioned, and before vCenter Server installation starts.
+
+```bash
+cat <<EOF >>terraform.tfvars
+update_esxi = true
+esxi_update_filename = "ESXi-7.0U3d-19482537-standard"
+EOF
+```
+
+A standalone Terraform script for ESXi upgrade is available [here](https://github.com/enkelprifti98/packet-esxi-6-7).
 
 ## Deploy the Equinix Metal vSphere cluster
 
