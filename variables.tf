@@ -50,7 +50,7 @@ variable "private_subnets" {
     vsphere_service_type = string,
     routable             = bool,
     cidr                 = string,
-    reserved_ip_count    = optional(number)
+    reserved_ip_count    = optional(number, 100)
   }))
   default = [
     {
@@ -58,8 +58,7 @@ variable "private_subnets" {
       "nat" : true,
       "vsphere_service_type" : "management",
       "routable" : true,
-      "cidr" : "172.16.0.0/24",
-      "reserved_ip_count" : 100
+      "cidr" : "172.16.0.0/24"
     },
     {
       "name" : "vMotion",
@@ -91,7 +90,6 @@ variable "public_subnets" {
     {
       "name" : "VM Public Net 1",
       "nat" : false,
-      "vsphere_service_type" : null,
       "routable" : true,
       "ip_count" : 8
     }
