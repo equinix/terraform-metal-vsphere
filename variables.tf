@@ -47,7 +47,7 @@ variable "private_subnets" {
   type = list(object({
     name                 = string,
     nat                  = bool,
-    vsphere_service_type = string,
+    vsphere_service_type = optional(string),
     routable             = bool,
     cidr                 = string,
     reserved_ip_count    = optional(number, 100)
