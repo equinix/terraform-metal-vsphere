@@ -1,5 +1,5 @@
 output "vpn_endpoint" {
-  value       = metal_device.router.access_public_ipv4
+  value       = equinix_metal_device.router.access_public_ipv4
   description = "L2TP VPN Endpoint"
 }
 
@@ -48,7 +48,7 @@ output "ssh_key_path" {
 }
 
 output "bastion_host" {
-  value       = metal_device.router.access_public_ipv4
+  value       = equinix_metal_device.router.access_public_ipv4
   description = "The ip of the basetion host that can run commands against all of the local IPs"
 }
 
