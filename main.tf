@@ -139,8 +139,7 @@ resource "equinix_metal_device" "esxi_hosts" {
 }
 
 resource "null_resource" "reboot_pre_upgrade" {
-
-  depends_on = [metal_device.esxi_hosts]
+  depends_on = [equinix_metal_device.esxi_hosts]
   count      = var.update_esxi ? 1 : 0
 
   provisioner "local-exec" {
@@ -153,12 +152,12 @@ resource "null_resource" "reboot_pre_upgrade" {
 resource "null_resource" "upgrade_nodes" {
 
   depends_on = [null_resource.reboot_pre_upgrade]
-  count      = var.update_esxi ? length(metal_device.esxi_hosts) : 0
+  count      = var.update_esxi ? length(equinix_metal_device.esxi_hosts) : 0
 
   connection {
     user        = local.ssh_user
     private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
-    host        = element(metal_device.esxi_hosts.*.access_public_ipv4, count.index)
+    host        = element(equinix_metal_device.esxi_hosts.*.access_public_ipv4, count.index)
   }
 
   provisioner "file" {
@@ -327,7 +326,7 @@ resource "null_resource" "install_vpn_server" {
   }
 
   provisioner "file" {
-    content = templatfile("${path.module}/templates/l2tp_vpn.sh", {
+    content = templatefile("${path.module}/templates/l2tp_vpn.sh", {
       ipsec_psk = random_password.ipsec_psk.result
       vpn_user  = var.vpn_user
       vpn_pass  = random_password.vpn_pass.result
