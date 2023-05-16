@@ -122,12 +122,6 @@ variable "esxi_size" {
   default     = "c3.medium.x86"
 }
 
-variable "facility" {
-  description = "This is the Region/Location of your deployment (Must be an IBX facility, Metro will be used if empty)"
-  type        = string
-  default     = ""
-}
-
 variable "metro" {
   description = "This is the Metro Location of your deployment. (Facility will be used if empty)"
   type        = string
