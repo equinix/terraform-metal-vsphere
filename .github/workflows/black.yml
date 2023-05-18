@@ -10,16 +10,17 @@ jobs:
     strategy:
       matrix:
         python-version:
-        - 3.6 # Match the version on the gateway node
+        - 3.12 # Match the version on the gateway node
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
     - id: fmt_and_lint
       run: |
-        pip install black==21.4b2 pylama
+        pip install black pylama
         black --check --diff .
         pylama
