@@ -1,5 +1,4 @@
 terraform {
-  experiments = [module_variable_optional_attrs]
   required_providers {
     null = {
       source = "hashicorp/null"
@@ -21,6 +20,7 @@ terraform {
       source = "hashicorp/local"
     }
   }
+  required_version = ">= 1.3.0"
   provider_meta "equinix" {
     module_name = "equinix-metal-vsphere"
   }
