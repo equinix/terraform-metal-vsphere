@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        tf: [1.0.7]
+        tf: [1.4]
         vsphere:
         #- vmware_os: vmware_esxi_6_7
         #  vcenter_iso: VMware-VCSA-all-6.7.0-14367737.iso
@@ -34,7 +34,7 @@ jobs:
       TF_VAR_esxi_host_count: 2
       TF_VAR_esxi_size: "c3.medium.x86"
       TF_VAR_router_size: "c3.medium.x86"
-      TF_VAR_facility: "dc13"
+      TF_VAR_metro: "dc"
       TF_VAR_create_project : false
     steps:
     - name: Checkout from Github
