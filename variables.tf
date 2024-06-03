@@ -277,3 +277,19 @@ variable "vcva_deployment_option" {
   type        = string
   default     = "small"
 }
+
+variable "update_esxi" {
+  description = "if true update the ESXi version before proceeding to vCenter installation"
+  type        = bool
+  default     = false
+}
+
+variable "esxi_update_filename" {
+  description = <<-EOF
+  The specific update version that your servers will be updated to.
+  Note that the Equinix Metal portal and API will still show ESXi 6.5 as the OS but this script adds a tag with the update filename specified below.
+  You can check all ESXi update versions/filenames here: https://esxi-patches.v-front.de/
+  EOF
+  type        = string
+  default     = "ESXi-7.0U3d-19482537-standard"
+}

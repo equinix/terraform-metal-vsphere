@@ -138,6 +138,56 @@ resource "equinix_metal_device" "esxi_hosts" {
   }
 }
 
+resource "null_resource" "reboot_pre_upgrade" {
+  depends_on = [equinix_metal_device.esxi_hosts]
+  count      = var.update_esxi ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "sleep 250"
+  }
+}
+
+# Run the ESXi update script file in each server.
+# If you make changes to the shell script, you need to update the sed command line number to get rid of te { at the end of the file which gets created by Terraform for some reason.
+resource "null_resource" "upgrade_nodes" {
+
+  depends_on = [null_resource.reboot_pre_upgrade]
+  count      = var.update_esxi ? length(equinix_metal_device.esxi_hosts) : 0
+
+  connection {
+    user        = local.ssh_user
+    private_key = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    host        = element(equinix_metal_device.esxi_hosts.*.access_public_ipv4, count.index)
+  }
+
+  provisioner "file" {
+    content = var.update_esxi ? templatefile("${path.module}/templates/update_esxi.sh.tpl", {
+      esxi_update_filename = "${var.esxi_update_filename}"
+
+    }) : ""
+    destination = "/tmp/update_esxi.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sed -i '27d' /tmp/update_esxi.sh",
+      "echo 'Running update script on remote host.'",
+      "chmod +x /tmp/update_esxi.sh",
+      "/tmp/update_esxi.sh"
+    ]
+  }
+}
+
+resource "null_resource" "reboot_post_upgrade" {
+
+  depends_on = [null_resource.upgrade_nodes]
+  count      = var.update_esxi ? 1 : 0
+
+  provisioner "local-exec" {
+    command = "sleep 250"
+  }
+}
+
 resource "equinix_metal_port" "esxi_hosts" {
   count    = length(equinix_metal_device.esxi_hosts)
   bonded   = false
@@ -151,7 +201,6 @@ resource "equinix_metal_port" "esxi_hosts" {
     ignore_changes = [vlan_ids]
   }
 }
-
 
 resource "null_resource" "run_pre_reqs" {
   connection {
@@ -198,20 +247,6 @@ resource "null_resource" "run_pre_reqs" {
   }
 }
 
-data "template_file" "download_vcenter" {
-  template = file("${path.module}/templates/download_vcenter.sh")
-  vars = {
-    object_store_bucket_name = var.object_store_bucket_name
-    object_store_tool        = var.object_store_tool
-    s3_url                   = var.s3_url
-    s3_access_key            = var.s3_access_key
-    s3_secret_key            = var.s3_secret_key
-    s3_version               = var.s3_version
-    vcenter_iso_name         = var.vcenter_iso_name
-    ssh_private_key          = chomp(tls_private_key.ssh_key_pair.private_key_pem)
-  }
-}
-
 resource "null_resource" "copy_gcs_key" {
   count      = var.object_store_tool == "gcs" ? 1 : 0
   depends_on = [null_resource.run_pre_reqs]
@@ -240,7 +275,17 @@ resource "null_resource" "download_vcenter_iso" {
   }
 
   provisioner "file" {
-    content     = data.template_file.download_vcenter.rendered
+    content = templatefile("${path.module}/templates/download_vcenter.sh", {
+      object_store_bucket_name = var.object_store_bucket_name
+      object_store_tool        = var.object_store_tool
+      s3_url                   = var.s3_url
+      s3_access_key            = var.s3_access_key
+      s3_secret_key            = var.s3_secret_key
+      s3_version               = var.s3_version
+      vcenter_iso_name         = var.vcenter_iso_name
+      ssh_private_key          = chomp(tls_private_key.ssh_key_pair.private_key_pem)
+    })
+
     destination = "bootstrap/download_vcenter.sh"
   }
 
@@ -269,16 +314,6 @@ resource "random_password" "vpn_pass" {
   special          = true
 }
 
-
-data "template_file" "vpn_installer" {
-  template = file("${path.module}/templates/l2tp_vpn.sh")
-  vars = {
-    ipsec_psk = random_password.ipsec_psk.result
-    vpn_user  = var.vpn_user
-    vpn_pass  = random_password.vpn_pass.result
-  }
-}
-
 resource "null_resource" "install_vpn_server" {
   depends_on = [
     null_resource.run_pre_reqs,
@@ -292,7 +327,11 @@ resource "null_resource" "install_vpn_server" {
   }
 
   provisioner "file" {
-    content     = data.template_file.vpn_installer.rendered
+    content = templatefile("${path.module}/templates/l2tp_vpn.sh", {
+      ipsec_psk = random_password.ipsec_psk.result
+      vpn_user  = var.vpn_user
+      vpn_pass  = random_password.vpn_pass.result
+    })
     destination = "bootstrap/vpn_installer.sh"
   }
 
@@ -381,6 +420,7 @@ resource "null_resource" "esx_network_prereqs" {
 resource "null_resource" "apply_esx_network_config" {
   count = length(equinix_metal_device.esxi_hosts)
   depends_on = [
+    null_resource.reboot_post_upgrade,
     equinix_metal_port.esxi_hosts,
     null_resource.esx_network_prereqs,
     null_resource.copy_update_uplinks,
