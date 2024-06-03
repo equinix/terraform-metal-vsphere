@@ -89,6 +89,6 @@ jobs:
     - name: Project Delete
       if: ${{ always() }}
       uses: equinix-labs/metal-sweeper-action@v0.6.1
-      env:
-        METAL_PROJECT_ID: ${{ steps.project.outputs.projectID }}
-        METAL_AUTH_TOKEN: ${{ secrets.METAL_AUTH_TOKEN }}
+      with:
+        authToken: ${{ secrets.METAL_AUTH_TOKEN }}
+        projectID: ${{ steps.project.outputs.projectID }}
