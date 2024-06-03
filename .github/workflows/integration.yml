@@ -76,10 +76,8 @@ jobs:
     - name: Terraform Apply
       id: apply
       timeout-minutes: 120
-      continue-on-error: true
       run: terraform apply -input=false tfplan
     - name: Terraform Destroy
-      continue-on-error: true
       id: destroy
       if: ${{ always() }}
       run: terraform destroy -input=false -auto-approve
