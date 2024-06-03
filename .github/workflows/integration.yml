@@ -51,8 +51,8 @@ jobs:
       run: terraform init -input=false
     - id: project
       uses: equinix-labs/metal-project-action@v0.14.1
-      env:
-        METAL_AUTH_TOKEN: ${{ secrets.METAL_AUTH_TOKEN }}
+      with:
+        userToken: ${{ secrets.METAL_AUTH_TOKEN }}
     # Configure an SSH Agent with a key that can access the project
     - name: SSH Agent
       run: |
