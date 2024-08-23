@@ -1,8 +1,10 @@
-# VMware on Equinix Metal
+# VMware on Equinix Metal (Deprecated)
 
-[![Experimental](https://img.shields.io/badge/Stability-Experimental-red.svg)](https://github.com/packethost/standards#about-uniform-standards)
-[![Slack Status](https://slack.equinixmetal.com/badge.svg)](https://slack.equinixmetal.com/)
-[![integration](https://github.com/equinix/terraform-metal-vsphere/actions/workflows/integration.yml/badge.svg)](https://github.com/equinix/terraform-metal-vsphere/actions/workflows/integration.yml)
+Pursuant to the following announcement in the Equinix Metal Changelog email from June 2024:
+
+> **VMware ESXi 6.5 and 6.7 EOL**: Starting July 1, you will be unable to install these ESXi versions through Equinix Metal. New customers with ESXi 7 and 8 needs should ask their software vendor about solutions or install VCF 5.1 on [supported Metal SKUs]( https://deploy.equinix.com/solutions/customer-operated/vmware-cloud-foundation-vcf-on-equinix-metal/).
+
+This repo is now deprecated. The removal of ESXi from the API options will prevent this project from being deployable in its current state. A proof-of-concept module for [installing VCF 5.1 on Equinix Metal](https://github.com/equinix-labs/terraform-equinix-metal-vcf) is available as an alternative reference.
 
 This repo has Terraform plans to deploy a multi-node vSphere cluster with vSan enabled on Equinix Metal. Follow this simple instructions below and you should be able to go from zero to vSphere in 30 minutes.
 
